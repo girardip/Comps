@@ -3,7 +3,7 @@ library(lodown)
 pnad_cat <-
   get_catalog( "pnad" ,
                output_dir = file.path( path.expand( "Data/" ) , "PNAD" ) )
-pnad_cat <- subset( pnad_cat , year == 2011 )
+pnad_cat <- subset( pnad_cat , year%in%!c(1992,1993,2007:2009, 2011, 2013:2015) )
 # download the microdata to your local computer
 pnad_cat <- lodown( "pnad" , pnad_cat )
 options( survey.lonely.psu = "adjust" )
