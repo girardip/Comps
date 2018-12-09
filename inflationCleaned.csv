@@ -1,0 +1,81 @@
+"","Region","Month","Inflation","year"
+"1","Belo Horizonte (MG)",1,"0.53",2010
+"2","Belo Horizonte (MG)",2,"0.77",2010
+"3","Belo Horizonte (MG)",3,"0.81",2010
+"4","Belo Horizonte (MG)",4,"0.66",2010
+"5","Belo Horizonte (MG)",5,"0.38",2010
+"6","Belo Horizonte (MG)",6,"0.05",2010
+"7","Belo Horizonte (MG)",7,"-0.06",2010
+"8","Belo Horizonte (MG)",8,"0.04",2010
+"9","Belo Horizonte (MG)",9,"0.42",2010
+"10","Belo Horizonte (MG)",10,"1.03",2010
+"11","Brasil",1,"0.75",2010
+"12","Brasil",2,"0.78",2010
+"13","Brasil",3,"0.52",2010
+"14","Brasil",4,"0.57",2010
+"15","Brasil",5,"0.43",2010
+"16","Brasil",6,"0.00",2010
+"17","Brasil",7,"0.01",2010
+"18","Brasil",8,"0.04",2010
+"19","Brasil",9,"0.45",2010
+"20","Brasil",10,"0.75",2010
+"21","Curitiba (PR)",1,"0.39",2010
+"22","Curitiba (PR)",2,"0.79",2010
+"23","Curitiba (PR)",3,"0.58",2010
+"24","Curitiba (PR)",4,"0.54",2010
+"25","Curitiba (PR)",5,"0.68",2010
+"26","Curitiba (PR)",6,"-0.15",2010
+"27","Curitiba (PR)",7,"0.31",2010
+"28","Curitiba (PR)",8,"0.64",2010
+"29","Curitiba (PR)",9,"0.36",2010
+"30","Curitiba (PR)",10,"0.68",2010
+"31","Porto Alegre (RS)",1,"0.55",2010
+"32","Porto Alegre (RS)",2,"0.74",2010
+"33","Porto Alegre (RS)",3,"0.80",2010
+"34","Porto Alegre (RS)",4,"0.56",2010
+"35","Porto Alegre (RS)",5,"0.06",2010
+"36","Porto Alegre (RS)",6,"-0.15",2010
+"37","Porto Alegre (RS)",7,"0.18",2010
+"38","Porto Alegre (RS)",8,"0.24",2010
+"39","Porto Alegre (RS)",9,"0.19",2010
+"40","Porto Alegre (RS)",10,"0.63",2010
+"41","Recife (PE)",1,"0.20",2010
+"42","Recife (PE)",2,"0.66",2010
+"43","Recife (PE)",3,"0.73",2010
+"44","Recife (PE)",4,"0.80",2010
+"45","Recife (PE)",5,"0.07",2010
+"46","Recife (PE)",6,"-0.04",2010
+"47","Recife (PE)",7,"0.05",2010
+"48","Recife (PE)",8,"-0.54",2010
+"49","Recife (PE)",9,"0.29",2010
+"50","Recife (PE)",10,"0.61",2010
+"51","Rio de Janeiro (RJ)",1,"1.00",2010
+"52","Rio de Janeiro (RJ)",2,"0.80",2010
+"53","Rio de Janeiro (RJ)",3,"0.80",2010
+"54","Rio de Janeiro (RJ)",4,"0.63",2010
+"55","Rio de Janeiro (RJ)",5,"0.70",2010
+"56","Rio de Janeiro (RJ)",6,"0.04",2010
+"57","Rio de Janeiro (RJ)",7,"-0.16",2010
+"58","Rio de Janeiro (RJ)",8,"0.01",2010
+"59","Rio de Janeiro (RJ)",9,"0.28",2010
+"60","Rio de Janeiro (RJ)",10,"0.42",2010
+"61","São Paulo (SP)",1,"1.00",2010
+"62","São Paulo (SP)",2,"0.78",2010
+"63","São Paulo (SP)",3,"0.30",2010
+"64","São Paulo (SP)",4,"0.45",2010
+"65","São Paulo (SP)",5,"0.33",2010
+"66","São Paulo (SP)",6,"0.00",2010
+"67","São Paulo (SP)",7,"-0.01",2010
+"68","São Paulo (SP)",8,"0.00",2010
+"69","São Paulo (SP)",9,"0.68",2010
+"70","São Paulo (SP)",10,"0.79",2010
+"71","Salvador (BA)",1,"0.77",2010
+"72","Salvador (BA)",2,"1.08",2010
+"73","Salvador (BA)",3,"0.62",2010
+"74","Salvador (BA)",4,"0.67",2010
+"75","Salvador (BA)",5,"0.80",2010
+"76","Salvador (BA)",6,"-0.04",2010
+"77","Salvador (BA)",7,"-0.15",2010
+"78","Salvador (BA)",8,"-0.20",2010
+"79","Salvador (BA)",9,"0.19",2010
+"80","Salvador (BA)",10,"0.87",2010
