@@ -1,0 +1,66 @@
+---
+title: "Things to think about"
+author: "Pedro Girardi"
+date: "December 3, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What source should I use? PNAD, PNAD Continua, or PME? 
+    
+Most people use PME. I think PME is adequate. It provides longitudinal data and happens monthly exactly in areas where inflation is available and broken down by components of the basket of goods. Show Ethan comparative table/translate.
+
+USE PME 
+    
+## Should I look at households or individuals?
+
+Individuals allow me to use the micro variables I wanted to. Households may be a more appropriate approach to account for fluctuations in family income. Maybe have two separate analysis, one simply on well-being of the poor and inflation and another one on individuals? People without income but who live in a household with income have `NAs`. 
+
+My take: look at individuals. If someone is not on the workforce, there's not all that much that I can analyze... Issue: story of women working part time thus being in the bottom of the income distribution while coming from middle class families. Really an issue?
+
+INDIVIDUALS FOR NOW. CAN LOOK AT HH LATER IF POSSIBLE
+
+## Options for Y:
+
+- Share of income of the lowest quintile (Easterly and Fischer): loses micro aspect; easy interpretation; allows for both individuals and households.
+- All the individually observed incomes of the people who were at the bottom quintile for any given measurement: allows for micro aspect; issue is that it assu mes all those observations are impacted by inflation in the same way, after accounting for micro variables (does it though?)
+- Build the lowest quintile/decile for a certain "micro agent" (getting the lowest quintile for all the combinations of gender, region, etc...): this takes a lot of degrees of freedom, as I am condensing multiple observations into one, potentially also reducing power of my study 
+- Build my own poverty gap/poverty line/GINI (could be at least a nice extension!)
+    
+My take: 2nd option probably works best. I can start by using the lowest quintile, which is a literature standard, and then as an extension move the threshold and note different results. As an extension also consider building my poverty gapy/line/GINI dependent variables and compare results. 
+
+LOG INCOME 
+    
+## Options for $\pi$
+
+- Lags: how long? Lags could be important, as there is indexing in the Brazilian economy. 
+- Recoding for low income households: re-weighting CPI for parts of the basket of goods
+    
+Bittencourt (2009) lags inflation on its dynamic model but not on its static (without apparent reason?). Another option would be to test the components of the basket of goods separately. This is really cool because it lets the data speak for itself, weighting the goods as necessary and judging whether they have significant impact. One potential issue could be high colinearity.
+
+INFLATION TAX
+
+## Transformations of main variables
+
+Imagining percent changes in income against inflation? Maybe use inflation tax, which should predict something like that? 
+
+Notes: if I use data more recent than 1995 (likely if I will be using PME/PNADs), then inflation does not go any higher than ~15%ish/year, meaning I do not have to worry that much about overly influential observations due to outlier inflation levels. The only concern should be interpreation/theory. 
+
+$$ Y,\ \log (Y) $$
+
+$$\text{CPI},\ \pi,\ \log(\pi),\  $$
+
+If I assume the impacts of inflation on the income of the poor are permanent, then CPI would be a good estimator. This seems a little unrealistic, though.
+
+USE INFLATION TAX
+
+## Accounting for additional variables
+
+Should I also account for other macro indicators that are potentially correlated with inflation or inequality? Growth and expenditures in social programs.
+
+Bittencourt, and Easterly and Fischer use GDP Growth (share of income of the bottom quintile), Romer and Romer use employment (which does not make sense if I am only looking at incomes of employed people instead of poverty). 
+
+GDP GROWTH FOR CAPITAL
