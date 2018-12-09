@@ -1,15 +1,17 @@
 library(lodown)
+# examine all available PME microdata files
+pme_cat <-
+  get_catalog( "pme" ,
+               output_dir = file.path( path.expand( "Data/" ) , "PME" ) )
 
-pnad_cat <-
-  get_catalog( "pnad" ,
-               output_dir = file.path( path.expand( "Data/" ) , "PNAD" ) )
-pnad_cat <- subset( pnad_cat , year%in%!c(1992,1993,2007:2009, 2011, 2013:2015) )
+# 2016 only
+pme_cat <- subset( pme_cat , year < 2010 )
 # download the microdata to your local computer
-pnad_cat <- lodown( "pnad" , pnad_cat )
-options( survey.lonely.psu = "adjust" )
+pme_cat <- lodown( "pme" , pme_cat, 
+                   output_dir = file.path( path.expand( "Data/" ) , "Data/PME" ))
 
 # or for complete data:
-lodown( "pnad" , output_dir = file.path( path.expand( "Data/" ) , "PNAD_COMPLETE" ) )
+lodown( "pme" ,output_dir = file.path( path.expand( "Data/" ) , "PME" ) )
 
 
 library(survey)
