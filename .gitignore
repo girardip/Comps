@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 PME/
+.httr-oauth
+PME_csv.zip
