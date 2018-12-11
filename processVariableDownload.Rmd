@@ -47,6 +47,20 @@ The next part can be computationally intensive. The goal is to read the .csvs in
 # read every old .csv, eliminate all variables that are not of interest
 # write new csv (hopefully much smaller) in new directory 
 # merge all the csv files, reading them in R and binding the rows
+
+listFiles =list.files("PME_csv/")
+setwd("PME_csv/")
+ab = F
+for (file in listFiles){
+  if (ab==F) {
+    completePME = read_csv(file)
+    ab=T
+  }
+  if (ab==T) {
+    completePME = completePME %>%
+      bind_rows(read_csv(file))
+  }
+}
 ````
 
 ## Inflation
