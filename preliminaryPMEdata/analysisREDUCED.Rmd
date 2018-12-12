@@ -101,22 +101,25 @@ originalColNames = str_replace_all(originalColNames, " ", "")
 
 
 ```{r Reading Inflation}
-inflation = read_csv("inflationCleaned.csv")[,-1]
+inflation = read_csv("inflationCleaned.csv")[,-1] %>% 
+  filter(Region != "Brasil") %>% 
+  mutate(Region = str_sub(string = Region,
+                          end = -6)) #removing Brazil data and abbreviation of cities
 
+library(plyr)
 # matching inflation with cases at PME
-rotPMEstates = rotPME %>% filter(cod=="V035")
-for (i in 1:length(reduced_pme$MetropolitanArea)) {
-  for (j in 1:length(rotPMEstates$valor)){
-    if (reduced_pme$MetropolitanArea[i]==rotPMEstates$valor[j]) {
-      reduced_pme$MetropolitanArea[i]==rotPMEstates$rotulo[j]
-    }
-  }  
-}
-sum(is.na(reduced_pme$MetropolitanArea))
+rotPMEstates = rotPME%>% filter(cod=="V035", rotulo%in%levels(reduced_pme$MetropolitanArea))
+
+reduced_pme$MetropolitanArea = mapvalues(reduced_pme$MetropolitanArea,
+                                         from = levels(reduced_pme$MetropolitanArea),
+                                         to = levels(as.factor(rotPMEstates$rotulo)))
+
+# joining the datasets
+left_join(reduced_pme, inflation, by=c("MetropolitanArea" = "Region", "Month" = "Month"))
 ```
 
 ````{r}
 # selecting only people in the bottom quintile of the income distribution at any given period
-# keep in mind this WONT be the final method
+# keep in mind this WONT be the final method (NOT TRACKING OVER TIME, REPEATED OBS OF INDIVIDUALS)
 
 ````
