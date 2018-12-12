@@ -108,18 +108,34 @@ inflation = read_csv("inflationCleaned.csv")[,-1] %>%
 
 library(plyr)
 # matching inflation with cases at PME
-rotPMEstates = rotPME%>% filter(cod=="V035", rotulo%in%levels(reduced_pme$MetropolitanArea))
+rotPMEstates = rotPME%>% filter(cod=="V035", valor%in%levels(reduced_pme$MetropolitanArea))
 
 reduced_pme$MetropolitanArea = mapvalues(reduced_pme$MetropolitanArea,
                                          from = levels(reduced_pme$MetropolitanArea),
                                          to = levels(as.factor(rotPMEstates$rotulo)))
 
 # joining the datasets
-left_join(reduced_pme, inflation, by=c("MetropolitanArea" = "Region", "Month" = "Month"))
+complete.df = left_join(reduced_pme, inflation, by=c("MetropolitanArea" = "Region", "Month" = "Month"))
 ```
 
 ````{r}
 # selecting only people in the bottom quintile of the income distribution at any given period
 # keep in mind this WONT be the final method (NOT TRACKING OVER TIME, REPEATED OBS OF INDIVIDUALS)
 
+complete.df = complete.df %>% group_by(Month) %>% mutate(Poor = ifelse(Income <= quantile(Income, probs = .2), T, F))
+poor.df = complete.df %>% filter(Poor==T)
 ````
+
+## Running the analysis
+
+```{r}
+lm1 = lm(data=poor.df, logIncome ~ Gender + Month + MetropolitanArea + Inflation)
+lm2 = update(lm1, . ~ . + Gender*Inflation*MetropolitanArea)
+
+summary(lm1)
+summary(lm2)
+anova(lm1, lm2, test="Chisq")
+```
+
+
+
