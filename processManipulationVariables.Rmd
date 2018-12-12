@@ -9,14 +9,15 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Income
+## Labeling and Income
 
 ```{r}
-# manipulation of income variable
+# PME relabeling (depends on what variables I imported)
 reduced_pme = read.csv("~/Comps/pme_reduced.csv")
 reduced_pme = reduced_pme[,-c(1)]
 names(reduced_pme) = c("Gender", "Month", "Household", "MetropolitanArea", "Income")
 
+# manipulation of income variable
 mean(is.na(reduced_pme$Income))
 mean(reduced_pme$Income==0, na.rm=T) 
 #there are people with income of 0. I will add $1 to all incomes so we don't have issues with log
