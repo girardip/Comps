@@ -124,6 +124,29 @@ reduced_pme$MetropolitanArea = plyr::mapvalues(reduced_pme$MetropolitanArea,
 # joining the datasets
 complete.df = left_join(reduced_pme, inflation, by=c("MetropolitanArea" = "Region", "Month" = "Month"))
 ```
+## Adding Growth
+
+````{r}
+growthData = read_csv(file = "growthData.csv", col_types = c("cd"))
+colnames(growthData)=c("Month", "GDP_Nominal")
+growthData = growthData %>% mutate(Year = as.integer(str_sub(Month, end = 4)),
+                                   Month = as.integer(str_sub(Month, start = 6)))
+# need to get the REAL GDP, not Nominal
+inflationBR = read_csv("inflationCleaned.csv")[,-1] %>% 
+  filter(Region == "Brasil")
+inflationBR = inflationBR %>%
+  mutate(Region = as.factor(Region))
+inflationBR = inflationBR %>% 
+  mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
+
+growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year" = "year"))
+growthData = growthData[complete.cases(growthData),] 
+growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
+
+cleanGrowthData = growthData %>% select(Month, Year, RealGDP) %>% mutate(ChangeInGDP = RealGDP-lag(RealGDP))
+# merging
+complete.df = complete.df %>% left_join(cleanGrowthData)
+````
 
 Because I am looking at the power of inflation on real income, I NEED TO account for the positive impact of inflation on NOMINAL terms. So I should adjust income such that if there was no change in real terms, $Y_{t+1}=Y_t\cdot (\pi_t+1) $. If not, hyperinflation would automatically trigger a false positive relation between the variables. This will be particularly relevant when looking at the final longitudinal analysis.
 
@@ -144,8 +167,9 @@ poor.df = complete.df %>% filter(Poor==T)
 ## Running the analysis
 
 ```{r}
-lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month + MetropolitanArea + Inflation)
-lm2 = update(lm1, . ~ . + Gender*Inflation*MetropolitanArea)
+lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month +
+           MetropolitanArea + Inflation + ChangeInGDP)
+lm2 = update(lm1, . ~ . + Gender*Inflation)
 
 summary(lm1)
 summary(lm2)

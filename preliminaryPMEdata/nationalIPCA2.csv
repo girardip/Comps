@@ -1,0 +1,27 @@
+﻿"Tabela 2942 - IPCA dessazonalizado - Variação mensal, acumulada no ano e peso mensal, para o índice geral, grupos, subgrupos, itens e subitens de produtos e serviços (de julho/2006 até dezembro/2011)"
+"Variável - IPCA dessazonalizado - Variação mensal (%)"
+"","Mês x Geral, grupo, subgrupo, item e subitem"
+"","julho 2006","agosto 2006","setembro 2006","outubro 2006","novembro 2006","dezembro 2006","janeiro 2007","fevereiro 2007","março 2007","abril 2007","maio 2007","junho 2007","julho 2007","agosto 2007","setembro 2007","outubro 2007","novembro 2007","dezembro 2007","janeiro 2008","fevereiro 2008","março 2008","abril 2008","maio 2008","junho 2008","julho 2008","agosto 2008","setembro 2008","outubro 2008","novembro 2008","dezembro 2008","janeiro 2009","fevereiro 2009","março 2009","abril 2009","maio 2009","junho 2009","julho 2009","agosto 2009","setembro 2009","outubro 2009","novembro 2009","dezembro 2009","janeiro 2010","fevereiro 2010","março 2010","abril 2010","maio 2010","junho 2010","julho 2010","agosto 2010","setembro 2010","outubro 2010","novembro 2010","dezembro 2010","janeiro 2011","fevereiro 2011","março 2011","abril 2011","maio 2011","junho 2011","julho 2011","agosto 2011","setembro 2011","outubro 2011","novembro 2011","dezembro 2011"
+"","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral","Índice geral"
+"Brasil","0.23","0.07","0.23","0.37","0.28","0.45","0.47","0.38","0.35","0.21","0.28","0.34","0.27","0.52","0.20","0.30","0.35","0.71","0.48","0.43","0.42","0.51","0.79","0.82","0.60","0.32","0.29","0.43","0.33","0.28","0.42","0.56","0.17","0.48","0.49","0.42","0.28","0.18","0.30","0.26","0.37","0.33","0.66","0.78","0.48","0.55","0.45","0.08","0.07","0.06","0.50","0.73","0.78","0.60","0.75","0.81","0.74","0.78","0.52","0.24","0.22","0.40","0.58","0.40","0.45","0.43"
+"Fonte: IBGE - Índice Nacional de Preços ao Consumidor Amplo"
+
+"Notas"
+"1 - Com a atualização das Estruturas de Ponderação, obtidas a partir da Pesquisa de Orçamentos Familiares - POF - 2002-2003, foram introduzidos aperfeiçoamentos na classificação dos produtos e serviços que compõem as estruturas dos índices de preços. Com isso, foram criadas novas tabelas, a partir de julho de 2006 para o IPCA e INPC e agosto de 2006 para o IPCA-E, contendo os dados com as estruturas atualizadas. Os dados de períodos anteriores são disponibilizados em outras tabelas."
+""
+"Legenda"
+"Símbolo","Significado"
+"-","Zero absoluto, não resultante de um cálculo ou arredondamento.
+Ex: Em determinado município não existem pessoas de 14 anos de idade sem instrução."
+"0","Zero resultante de um cálculo ou arredondamento.
+Ex: A inflação do feijão em determinada Região Metropolitana foi 0.
+Determinado município produziu 400 kg de sementes de girassol e os dados da tabela são expressos em toneladas."
+"X","Valor inibido para não identificar o informante.
+Ex: Determinado município só possui uma empresa produtora de cimento, logo o valor de sua produção deve ser inibido."
+"..","Valor não se aplica.
+Ex: Não se pode obter o total da produção agrícola em determinado município quando os produtos agrícolas são contabilizados com unidades de medida distintas."
+"...","Valor não disponível.
+Ex: A produção de feijão em determinado município não foi pesquisada ou determinado município não existia no ano da pesquisa."
+"A a Z
+(exceto X)","Significa uma faixa de valores. Varia em função da tabela (se for o caso).
+Ex: O nível de precisão da produção estimada de combustíveis está na faixa A (95 a 100%)"
