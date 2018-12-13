@@ -66,6 +66,7 @@ for (file in listFiles){
 ## Inflation
 
 Manually download .csv from IBGE website. There will be multiple files for different years. Check why IBGE has different files. The code below should suffice to write a narrow csv for every inflation file. 
+
 ````{r}
 library(tidyverse)
 inflationData = read.csv("inflacaoMetro.csv", skip = 3)[-1,]
@@ -93,6 +94,26 @@ The narrow .csv can then be matched to specific individual observations in the P
 ## GDP Growth
 
 Likely a similar process to inflation.
+
+````{r}
+growthData = read_csv(file = "growthData.csv", col_types = c("cd")) #avoids issue with month .10 and .1 by making them a character
+colnames(growthData)=c("Month", "GDP_Nominal")
+growthData = growthData %>% mutate(Year = as.integer(str_sub(Month, end = 4)),
+                                   Month = as.integer(str_sub(Month, start = 6)))
+# need to get the REAL GDP, not Nominal
+inflationBR = read_csv("inflationCleaned.csv")[,-1] %>% 
+  filter(Region == "Brasil")
+inflationBR = inflationBR %>%
+  mutate(Region = as.factor(Region))
+inflationBR = inflationBR %>% 
+  mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
+
+growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year" = "year"))
+growthData = growthData[complete.cases(growthData),] 
+growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
+
+cleanGrowthData = growthData %>% select(Month, Year, RealGDP) %>% mutate(ChangeInGDP = RealGDP-lag(RealGDP))
+````
 
 ## Final output
 

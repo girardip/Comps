@@ -17,6 +17,8 @@ library(tidyverse)
 library(readr)
 library(readxl)
 library(dicionariosIBGE)
+library(feather)
+library(data.table)
 ```
 
 ```{r Importing Data}
@@ -25,6 +27,12 @@ reduced_pme = read.csv("pme_reduced.csv")[,-1]
 reduced_pme_original = reduced_pme
 colnames(reduced_pme_original) = sub('.*\\.', '', colnames(reduced_pme_original))
 ```
+
+````{r Importing the Actual Full Dataset, eval=F}
+tempDf = data.table::fread("~/Comps/PME/PME_csv/reduced_df8.csv")
+tempDf= tempDf %>% 
+  select()
+````
 
 ```{r Relabeling Columns}
 # PME relabeling (depends on what variables I imported)
@@ -148,7 +156,7 @@ cleanGrowthData = growthData %>% select(Month, Year, RealGDP) %>% mutate(ChangeI
 complete.df = complete.df %>% left_join(cleanGrowthData)
 ````
 
-Because I am looking at the power of inflation on real income, I NEED TO account for the positive impact of inflation on NOMINAL terms. So I should adjust income such that if there was no change in real terms, $Y_{t+1}=Y_t\cdot (\pi_t+1) $. If not, hyperinflation would automatically trigger a false positive relation between the variables. This will be particularly relevant when looking at the final longitudinal analysis.
+Because I am looking at the power of inflation on real income, I NEED TO account for the positive impact of inflation on NOMINAL terms. So I should adjust income such that if there was no change in real terms, $$Y_{t+1}=Y_t\cdot (\pi_t+1) $$. If not, hyperinflation would automatically trigger a false positive relation between the variables. This will be particularly relevant when looking at the final longitudinal analysis.
 
 ````{r}
 complete.df = complete.df %>% mutate(RealIncome = Income/PriceIndex,
@@ -169,7 +177,7 @@ poor.df = complete.df %>% filter(Poor==T)
 ```{r}
 lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month +
            MetropolitanArea + Inflation + ChangeInGDP)
-lm2 = update(lm1, . ~ . + Gender*Inflation)
+lm2 = update(lm1, . ~ . + Gender*Inflation + Inflation*MetropolitanArea)
 
 summary(lm1)
 summary(lm2)
