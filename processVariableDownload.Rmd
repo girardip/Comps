@@ -21,7 +21,7 @@ pme_cat <-
                output_dir = file.path( path.expand( "Data/" ) , "PME" ) )
 
 # 2010+ only
-pme_cat <- subset( pme_cat , year < 2010 )
+pme_cat <- subset( pme_cat , year < 2007 )
 # download the microdata to your local computer
 pme_cat <- lodown( "pme" , pme_cat, 
                    output_dir = file.path( path.expand( "Data/" ) , "Data/PME" ))
