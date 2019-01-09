@@ -21,14 +21,14 @@ library(feather)
 library(data.table)
 ```
 
-```{r Importing Data}
+```{r Importing Reduced Dataset}
 setwd("~/Comps/preliminaryPMEdata/")
 reduced_pme = read.csv("pme_reduced.csv")[,-1]
 reduced_pme_original = reduced_pme
 colnames(reduced_pme_original) = sub('.*\\.', '', colnames(reduced_pme_original))
 ```
 
-````{r Importing the Actual Full Dataset, eval=F}
+````{r Importing the Actual Full Dataset, eval=T}
 # Importing datset and selecting relevant variables
 fullDf = data.table::fread("~/Comps/PME/PME_csv/reduced_df8.csv")
 fullDf= fullDf %>% 
@@ -42,7 +42,7 @@ fullDf$v307 = ifelse(is.na(fullDf$v307), "Other", fullDf$v307)
 ````
 
 
-```{r Relabeling Factors, eval=F}
+```{r Relabeling Factors, eval=T}
 dictionaryPME = read_xls("~/Comps/PME/documentacao/Layout/dicionario.xls", skip = 7, col_names = F)
 names(dictionaryPME) = c("inicio", "tamanho", "cod", "desc", "valor", "rotulo")
 # fixing NAs 
@@ -136,6 +136,7 @@ reduced_pme$MetropolitanArea = plyr::mapvalues(reduced_pme$MetropolitanArea,
 # joining the datasets
 complete.df = left_join(reduced_pme, inflation, by=c("MetropolitanArea" = "Region", "Month" = "Month"))
 ```
+
 ## Adding Growth
 
 ````{r}
@@ -182,7 +183,7 @@ poor.df = complete.df %>% filter(Poor==T)
 lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month +
            MetropolitanArea + Inflation + ChangeInGDP)
 lm2 = update(lm1, . ~ . + Gender*Inflation + Inflation*MetropolitanArea)
-
+ 
 summary(lm1)
 summary(lm2)
 anova(lm1, lm2, test="Chisq")

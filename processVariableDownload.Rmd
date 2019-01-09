@@ -13,15 +13,20 @@ knitr::opts_chunk$set(echo = TRUE, eval = F)
 
 Use the package `lodown` to download the variables. This is the process recommended by IBGE on its website. This process saves several .rds files. 
 
-````{r}
+````{r Loading Packages}
 library(lodown)
+library(tidyverse)
+library(data.table)
+```
+
+```{r, eval=F}
 # examine all available PME microdata files
 pme_cat <-
   get_catalog( "pme" ,
                output_dir = file.path( path.expand( "Data/" ) , "PME" ) )
 
 # 2010+ only
-pme_cat <- subset( pme_cat , year < 2007 )
+pme_cat <- subset( pme_cat , year < 2005 )
 # download the microdata to your local computer
 pme_cat <- lodown( "pme" , pme_cat, 
                    output_dir = file.path( path.expand( "Data/" ) , "Data/PME" ))
@@ -34,10 +39,24 @@ lodown( "pme" ,output_dir = file.path( path.expand( "Data/" ) , "PME" ) )
 Once you have the .rds files for the years required, I convert them to .csv files. This saved me some space so I could upload to mirage. 
 
 ````{r}
-reduced_list = list.files(pattern = ".rds")
-reduced_df = map_dfr(reduced_list, readRDS)
-fwrite(reduced_df, "~/Comps/reduced_df1.csv")
+setwd("Data/PME/")
+reduced_list = list.files(pattern = ".rds", path = "PME/")
+# reduced_df = map_dfr(reduced_list, readRDS)
+# fwrite(reduced_df, "~/Comps/reduced_df1.csv")
 ````
+
+```{r Converting several RDS to CSV}
+setwd("PME/")
+readingRDSFiles = function(listFiles){
+  for (file in listFiles){
+    currentFile = readRDS(file)
+    fwrite(currentFile, paste0("CSV/",str_sub(file, end = -5)),".csv")
+    rm(list = ls())
+  }
+}
+
+readingRDSFiles(reduced_list)
+```
 
 The next part can be computationally intensive. The goal is to read the .csvs into R, remove all the variables that are not of interest, and then finally merge all the datasets into one. The goal here is to have a dataset that is ready to run a simple regression. One potential issue can be to trace the same people over time. PUCRIO, a Brazilian university, has a code in STATA that takes care of that. 
 
