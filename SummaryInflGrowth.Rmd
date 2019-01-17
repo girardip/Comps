@@ -1,0 +1,131 @@
+---
+title: "Summary Statistics Inflation and Growth"
+author: "Pedro Girardi"
+date: "January 15, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+## Inflation
+
+```{r Reading Inflation}
+inf1 = read_csv("InflationData/infl1.csv", col_names = F)[-1,]
+inf2 = read_csv("InflationData/inf2.csv", col_names = F)[-1,]
+inf3 = read_csv("InflationData/inf3.csv", col_names = F)[-1,]
+
+# rows below label the columns with the adequate inflation months
+colnames(inf1) = c("Region", paste0(c(rep(01:12, times=6), 1:11),c(rep(2012:2017, each=12), rep(2018, each=11))))
+colnames(inf2) = c("Region", paste0(c(7:12, rep(01:12, times=5)),c(rep(2006, each=6), rep(2007:2011, each=12))))
+colnames(inf3) = c("Region", paste0(c(8:12, rep(01:12, times=6), 1:6), c(rep(1999, each=5), rep(2000:2005, each=12), rep(2006, times=6))))
+
+# joins the three separate files 
+inflation = left_join(inf3, (left_join(inf2, inf1)))
+# makes region column into factor
+inflation = inflation %>%
+  mutate(Region = as.factor(Region))
+
+inflation = inflation %>%
+  gather(key="Month", value="Inflation", -Region) # makes it into a narrow format
+
+# inflation = inflation %>% 
+#   mutate(Inflation = as.double(Inflation)) %>% 
+#   group_by(Region) %>% 
+#   mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
+# not useful since Datazoom STATA DB  already adjusts the income
+
+# matching inflation with cases at PME
+
+# splits Month into month and year, and then creates variable with time sequence (1, 2, 3, 4...)
+inflation = inflation %>% mutate(Year = as.integer(str_sub(Month, start=-4)),
+                                 Month = as.integer(str_sub(Month, end=-5)))
+
+# sorts dataset by chronological order and then adds time column
+inflation = inflation %>% arrange(Year, Month) %>%
+              group_by(Region) %>% 
+              mutate(timeDiscrete = 1:n(),
+                     Date = lubridate::myd(paste(Month, Year, 1)))
+inflation = inflation %>%  mutate(Inflation = as.numeric(Inflation)) # makes inflation an integer
+
+# creates df that has multiple columns (one per state)
+inflationWide = inflation %>% spread(Region, Inflation)
+inflationWide[5:10] = sapply(inflationWide[5:10], as.numeric)
+```
+
+````{r Summarizing}
+library(stargazer, quietly = T)
+summary(inflation$Inflation)
+round(cor(inflationWide[5:10]), 3)
+````
+
+
+````{r Plotting}
+ggplot(inflation, aes(x=Date, y=Inflation)) + geom_line(aes(col=Region)) + theme_minimal()
+````
+
+## Adding Growth
+
+````{r}
+growthData = read_csv(file = "growthData.csv", col_types = c("cd"))
+colnames(growthData)=c("Month", "GDP_Nominal")
+growthData = growthData %>% mutate(Year = as.integer(str_sub(Month, end = 4)),
+                                   Month = as.integer(str_sub(Month, start = 6)))
+# need to get the REAL GDP, not Nominal
+inflationBR = read_csv("inflationCleaned.csv")[,-1] %>% 
+  filter(Region == "Brasil")
+inflationBR = inflationBR %>%
+  mutate(Region = as.factor(Region))
+inflationBR = inflationBR %>% 
+  mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
+
+growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year" = "year"))
+growthData = growthData[complete.cases(growthData),] 
+growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
+
+cleanGrowthData = growthData %>% select(Month, Year, RealGDP) %>% mutate(ChangeInGDP = RealGDP-lag(RealGDP))
+# merging
+complete.df = complete.df %>% left_join(cleanGrowthData)
+````
+
+Because I am looking at the power of inflation on real income, I NEED TO account for the positive impact of inflation on NOMINAL terms. So I should adjust income such that if there was no change in real terms, $$Y_{t+1}=Y_t\cdot (\pi_t+1) $$. If not, hyperinflation would automatically trigger a false positive relation between the variables. This will be particularly relevant when looking at the final longitudinal analysis.
+
+````{r}
+complete.df = complete.df %>% mutate(RealIncome = Income/PriceIndex,
+                                     logRealIncome = log(RealIncome))
+````
+
+
+````{r}
+# selecting only people in the bottom quintile of the income distribution at any given period
+# keep in mind this WONT be the final method (NOT TRACKING OVER TIME, REPEATED OBS OF INDIVIDUALS)
+
+complete.df = complete.df %>% group_by(Month) %>% mutate(Poor = ifelse(RealIncome <= quantile(RealIncome, probs = .2), T, F))
+poor.df = complete.df %>% filter(Poor==T)
+````
+
+## Running the analysis
+
+```{r}
+lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month +
+           MetropolitanArea + Inflation + ChangeInGDP)
+lm2 = update(lm1, . ~ . + Gender*Inflation + Inflation*MetropolitanArea)
+ 
+summary(lm1)
+summary(lm2)
+anova(lm1, lm2, test="Chisq")
+```
+
+
+
+ 
+
+
+
+
+
+
+

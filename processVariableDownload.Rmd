@@ -50,7 +50,9 @@ setwd("PME/")
 readingRDSFiles = function(listFiles){
   for (file in listFiles){
     currentFile = readRDS(file)
-    fwrite(currentFile, paste0("CSV/",str_sub(file, end = -5)),".csv")
+    # currentFile = currentFile %>% 
+    #   select(v035, v040, v050, v070, v203, v4191, v208, v301, v307, v234)
+    fwrite(x = currentFile, file = paste0("CSV",str_sub(file, end = -5), ".csv"))
     rm(list = ls())
   }
 }
