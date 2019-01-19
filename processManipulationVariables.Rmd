@@ -9,6 +9,36 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+library(data.table)
+```
+
+## Importing STATA Exported .csvs and selecting variables of interest
+
+```{r}
+setwd("PME_stata/")#set directory to where the STATA csv files are
+listOfCsv = list.files()# get a list of all files
+
+# create data frame with one of the files (Selecting for the variables of interest)
+stataCsv = fread(file = listOfCsv[[1]]) %>% 
+  select(v035, v040, v050, v070, v203, v4191, v208,
+         v301, v307, v234, vD23df, vD24df, vD25df, 
+         vD26df, p201, idind) 
+
+# runs for loop that reads one file and appends rows of columns of interest to previous df
+for (fileCsv in listOfCsv[-1]){
+  currentFile = fread(file = fileCsv) %>% 
+  select(v035, v040, v050, v070, v203, v4191, v208,
+         v301, v307, v234, vD23df, vD24df, vD25df, 
+         vD26df, p201, idind)
+  stataCsv = bind_rows(stataCsv, currentFile)
+}
+
+# fwrite(stataCsv, "finalPME.csv")
+
+```
+
 ## Labeling and Income
 
 ```{r}
