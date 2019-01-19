@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 PME/
+PME_stata/
 .httr-oauth
 PME_csv.zip

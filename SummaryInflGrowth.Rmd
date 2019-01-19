@@ -59,7 +59,7 @@ inflationWide[5:10] = sapply(inflationWide[5:10], as.numeric)
 ````{r Summarizing}
 library(stargazer, quietly = T)
 summary(inflation$Inflation)
-round(cor(inflationWide[5:10]), 3)
+round(cor(inflationWide[5:11]), 3)
 ````
 
 
@@ -70,60 +70,30 @@ ggplot(inflation, aes(x=Date, y=Inflation)) + geom_line(aes(col=Region)) + theme
 ## Adding Growth
 
 ````{r}
-growthData = read_csv(file = "growthData.csv", col_types = c("cd"))
+growthData = read_csv(file = "GrowthData/growthData.csv", col_types = c("cd"))
 colnames(growthData)=c("Month", "GDP_Nominal")
 growthData = growthData %>% mutate(Year = as.integer(str_sub(Month, end = 4)),
                                    Month = as.integer(str_sub(Month, start = 6)))
 # need to get the REAL GDP, not Nominal
-inflationBR = read_csv("inflationCleaned.csv")[,-1] %>% 
+inflationBR = inflation %>% 
   filter(Region == "Brasil")
-inflationBR = inflationBR %>%
-  mutate(Region = as.factor(Region))
 inflationBR = inflationBR %>% 
   mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
 
-growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year" = "year"))
+growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year"))
 growthData = growthData[complete.cases(growthData),] 
 growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
 
-cleanGrowthData = growthData %>% select(Month, Year, RealGDP) %>% mutate(ChangeInGDP = RealGDP-lag(RealGDP))
-# merging
-complete.df = complete.df %>% left_join(cleanGrowthData)
+cleanGrowthData = growthData %>% select(Month, Year, RealGDP, Date) %>% mutate(ChangeInGDP = (RealGDP-lag(RealGDP))/lag(RealGDP))
 ````
-
-Because I am looking at the power of inflation on real income, I NEED TO account for the positive impact of inflation on NOMINAL terms. So I should adjust income such that if there was no change in real terms, $$Y_{t+1}=Y_t\cdot (\pi_t+1) $$. If not, hyperinflation would automatically trigger a false positive relation between the variables. This will be particularly relevant when looking at the final longitudinal analysis.
-
-````{r}
-complete.df = complete.df %>% mutate(RealIncome = Income/PriceIndex,
-                                     logRealIncome = log(RealIncome))
-````
-
-
-````{r}
-# selecting only people in the bottom quintile of the income distribution at any given period
-# keep in mind this WONT be the final method (NOT TRACKING OVER TIME, REPEATED OBS OF INDIVIDUALS)
-
-complete.df = complete.df %>% group_by(Month) %>% mutate(Poor = ifelse(RealIncome <= quantile(RealIncome, probs = .2), T, F))
-poor.df = complete.df %>% filter(Poor==T)
-````
-
-## Running the analysis
 
 ```{r}
-lm1 = lm(data=poor.df, logRealIncome ~ Gender + Month +
-           MetropolitanArea + Inflation + ChangeInGDP)
-lm2 = update(lm1, . ~ . + Gender*Inflation + Inflation*MetropolitanArea)
- 
-summary(lm1)
-summary(lm2)
-anova(lm1, lm2, test="Chisq")
+summary(cleanGrowthData[,c(3,5)])
+ggplot(cleanGrowthData, aes(x=Date, y=RealGDP)) + geom_line() + theme_minimal()
+ggplot(cleanGrowthData, aes(x=Date, y=ChangeInGDP)) + geom_line() + theme_minimal()
+summary(lm(data=cleanGrowthData, ChangeInGDP ~ as.factor(Month))) # there seems to be some seasonality 
+summary(lm(data=inflation, Inflation ~ as.factor(Month))) # there seems to be some seasonality 
 ```
-
-
-
- 
-
-
 
 
 
