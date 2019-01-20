@@ -47,15 +47,22 @@ fwrite(reducedPME, file = "reducedPME.csv")
 ```
 
 ```{r Reading Reduced PME file}
-reducedPME = fread("reducedPME.csv")
+reducedPME = fread("reducedPME.csv") %>% 
+  mutate(v035 = as.factor(v035))
 ```
 
 ## Flagging low income people
 
 ```{r}
+macro.df = fread("macrodata.csv")
+metropolitanVectorNames = list(26, 29, 31, 33, 35, 43)
+names(metropolitanVectorNames) = unique(macro.df$Region)[unique(macro.df$Region)!="Brasil"]
+levels(reducedPME$v035) = names(metropolitanVectorNames)
+
 reducedPME = reducedPME %>% 
-  filter(!is.na(v4191)) %>% 
-  group_by(v070,v075) %>% 
+  filter(!is.na(v4191),
+         v4191!=999999999) %>% 
+  group_by(month_year = as.factor(paste0(v070,v075))) %>% 
   mutate(PoorThreshold = quantile(v4191, probs=.2), 
          Poor = as.factor(ifelse(v4191<PoorThreshold, T, F)))
 
