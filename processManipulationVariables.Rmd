@@ -22,7 +22,7 @@ listOfCsv = list.files()# get a list of all files
 
 # create data frame with one of the files (Selecting for the variables of interest)
 stataCsv = fread(file = listOfCsv[[1]]) %>% 
-  select(v035, v040, v050, v070, v203, v4191, v208,
+  select(v035, v040, v050, v070, v075, v203, v4191, v208,
          v301, v307, v234, vD23df, vD24df, vD25df, 
          vD26df, p201, idind) 
 
