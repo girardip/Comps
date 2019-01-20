@@ -67,6 +67,7 @@ round(cor(inflationWide[5:11]), 3)
 ggplot(inflation, aes(x=Date, y=Inflation)) + geom_line(aes(col=Region)) + theme_minimal()
 ````
 
+
 ## Adding Growth
 
 ````{r}
@@ -80,7 +81,7 @@ inflationBR = inflation %>%
 inflationBR = inflationBR %>% 
   mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
 
-growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year"))
+growthData = growthData %>% le ft_join(inflationBR, by = c("Month", "Year"))
 growthData = growthData[complete.cases(growthData),] 
 growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
 
@@ -96,6 +97,10 @@ summary(lm(data=inflation, Inflation ~ as.factor(Month))) # there seems to be so
 ```
 
 
+```{r Writing Files, eval=F}
+combined.df = left_join(inflation, growthData)
+data.table::fwrite(combined.df, "macrodata.csv")
+```
 
 
 

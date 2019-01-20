@@ -43,11 +43,11 @@ finalPME = fread("finalPME.csv")
 # Sample 10% of households and select important columns
 hhSample = sample(finalPME$idind, length(unique(finalPME$idind))/20, replace = F)
 reducedPME = finalPME %>% filter(idind %in% hhSample)
-fwrite(reducedPME, file = "reducedPME")
+fwrite(reducedPME, file = "reducedPME.csv")
 ```
 
 ```{r Reading Reduced PME file}
-reducedPME = fread("reducedPME")
+reducedPME = fread("reducedPME.csv")
 ```
 
 ## Flagging low income people
