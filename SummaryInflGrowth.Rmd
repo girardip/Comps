@@ -81,7 +81,7 @@ inflationBR = inflation %>%
 inflationBR = inflationBR %>% 
   mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
 
-growthData = growthData %>% le ft_join(inflationBR, by = c("Month", "Year"))
+growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year"))
 growthData = growthData[complete.cases(growthData),] 
 growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
 
@@ -98,7 +98,7 @@ summary(lm(data=inflation, Inflation ~ as.factor(Month))) # there seems to be so
 
 
 ```{r Writing Files, eval=F}
-combined.df = left_join(inflation, growthData)
+combined.df = left_join(inflation, cleanGrowthData)
 data.table::fwrite(combined.df, "macrodata.csv")
 ```
 
