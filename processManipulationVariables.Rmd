@@ -29,7 +29,7 @@ stataCsv = fread(file = listOfCsv[[1]]) %>%
 # runs for loop that reads one file and appends rows of columns of interest to previous df
 for (fileCsv in listOfCsv[-1]){
   currentFile = fread(file = fileCsv) %>% 
-  select(v035, v040, v050, v070, v203, v4191, v208,
+  select(v035, v040, v050, v070, v075, v203, v4191, v208,
          v301, v307, v234, vD23df, vD24df, vD25df, 
          vD26df, p201, idind)
   stataCsv = bind_rows(stataCsv, currentFile)
@@ -53,7 +53,11 @@ reducedPME = fread("reducedPME")
 ## Flagging low income people
 
 ```{r}
-reducedPME = redu
+reducedPME = reducedPME %>% 
+  filter(!is.na(v4191)) %>% 
+  group_by(v070,v075) %>% 
+  mutate(PoorThreshold = quantile(v4191, probs=.2), 
+         Poor = as.factor(ifelse(v4191<PoorThreshold, T, F)))
 
 ```
 
