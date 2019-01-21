@@ -51,26 +51,74 @@ reducedPME = fread("reducedPME.csv") %>%
   mutate(v035 = as.factor(v035))
 ```
 
-## Flagging low income people
+## Merging Dataset with Macro Data
 
 ```{r}
-macro.df = fread("macrodata.csv")
+macro.df = fread("macrodata.csv") %>% 
+  mutate(Region = as.factor(Region))
 metropolitanVectorNames = list(26, 29, 31, 33, 35, 43)
 names(metropolitanVectorNames) = unique(macro.df$Region)[unique(macro.df$Region)!="Brasil"]
 levels(reducedPME$v035) = names(metropolitanVectorNames)
+reducedPME = left_join(reducedPME, macro.df, by=c("v035"="Region", "v070"="Month", "v075"="Year"))
+```
 
+## Flagging low income people
+
+```{r Flags low income people}
 reducedPME = reducedPME %>% 
   filter(!is.na(v4191),
-         v4191!=999999999) %>% 
-  group_by(month_year = as.factor(paste0(v070,v075))) %>% 
-  mutate(PoorThreshold = quantile(v4191, probs=.2), 
-         Poor = as.factor(ifelse(v4191<PoorThreshold, T, F)))
-
+         v4191!=999999999) %>%
+  mutate(realWage = v4191/PriceIndex) %>%  
+  group_by(month_year = as.factor(paste0(as.character(v070),as.character(v075)))) %>% 
+  mutate(PoorThreshold = quantile(realWage, probs=.2), 
+         Poor = as.factor(ifelse(realWage<PoorThreshold, T, F)))
 ```
 
-## Woring with income data
+```{r Filters low income people}
+# length(unique(reducedPME$idind))
+reducedPME = reducedPME %>% 
+  filter(Poor==T)
+# length(unique(reducedPME$idind))
+# About 1/3 of people are flagged as "poor"
+```
+
+## Working with income variable
+
+```{r Creates Lagged Income and change in income}
+reducedPME = reducedPME %>% 
+                filter(realWage > 0) %>%  #filters wage of 0
+                group_by(idind) %>%
+                mutate(lagRealWage = lag(realWage),
+                       pctChangeWage = (realWage-lagRealWage)/(lagRealWage))
+# Check why most people have ~2.4 obs
+```
+
+```{r Filters out incomplete individual obs}
+# This filters lots of stuff, because I will be taking out all the first observations, and many people only have 1-2 obs
+reducedPME = reducedPME[!is.na(reducedPME$lagRealWage),]
+
+# Also takes out NAN/Inf values for pct change in income
+reducedPME = reducedPME[!is.infinite(reducedPME$pctChangeWage),]
+```
+
+## Runs the regression
 
 ```{r}
-summary(reducedPME$vD26df)
+lm1 = lm(data=reducedPME, pctChangeWage ~ Inflation + lagInflation + ChangeInGDP + v035)
+summary(lm1)
 
+lm2 = update(lm1, realWage ~.)
+summary(lm2)
+
+lm3 = update(lm1, log(realWage) ~ .)
+summary(lm3)
+
+lm4 = lm(data=reducedPME, log(realWage) ~ inflationTax + lagInflationTax + ChangeInGDP + v035)
+summary(lm4)
+
+plot(lm4)
+plot(cooks.distance(lm4) ~ reducedPME$realWage)
 ```
+
+
+

@@ -32,11 +32,10 @@ inflation = inflation %>%
 inflation = inflation %>%
   gather(key="Month", value="Inflation", -Region) # makes it into a narrow format
 
-# inflation = inflation %>% 
-#   mutate(Inflation = as.double(Inflation)) %>% 
-#   group_by(Region) %>% 
-#   mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
-# not useful since Datazoom STATA DB  already adjusts the income
+inflation = inflation %>%
+  mutate(Inflation = as.double(Inflation)) %>%
+  group_by(Region) %>%
+  mutate(PriceIndex = cumprod(1+Inflation/100)) #creates CPI
 
 # matching inflation with cases at PME
 
@@ -49,7 +48,10 @@ inflation = inflation %>% arrange(Year, Month) %>%
               group_by(Region) %>% 
               mutate(timeDiscrete = 1:n(),
                      Date = lubridate::myd(paste(Month, Year, 1)))
-inflation = inflation %>%  mutate(Inflation = as.numeric(Inflation)) # makes inflation an integer
+inflation = inflation %>%  mutate(Inflation = as.numeric(Inflation), # makes inflation an integer
+                                  lagInflation = lag(Inflation),
+                                  inflationTax = Inflation/(Inflation+1),
+                                  lagInflationTax = lag(Inflation)/(lag(Inflation)+1))
 
 # creates df that has multiple columns (one per state)
 inflationWide = inflation %>% spread(Region, Inflation)
