@@ -37,17 +37,6 @@ for (fileCsv in listOfCsv[-1]){
 # fwrite(stataCsv, "finalPME.csv"
 ```
 
-Variables:
-
-v203: Gender (Male=1)
-v208: Ethnicity (White=1, Black=2, Yellow=3, Mixed=4, Native=5, Ignored=9)
-v4191: Income (999999999 = ignored)
-v301: Writes/reads? (Yes=1, No=2, 0="Deleted by the surveyer", NA=NA)
-v307: schooling (a mess...)/turn into factor
-v234: age
-
-ADD 409 (TYPE OF WORKER!!!!)
-
 ```{r, eval=F}
 finalPME = fread("finalPME.csv")
 
