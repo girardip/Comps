@@ -34,8 +34,19 @@ for (fileCsv in listOfCsv[-1]){
          vD26df, p201, idind)
   stataCsv = bind_rows(stataCsv, currentFile)
 }
-# fwrite(stataCsv, "finalPME.csv")
+# fwrite(stataCsv, "finalPME.csv"
 ```
+
+Variables:
+
+v203: Gender (Male=1)
+v208: Ethnicity (White=1, Black=2, Yellow=3, Mixed=4, Native=5, Ignored=9)
+v4191: Income (999999999 = ignored)
+v301: Writes/reads? (Yes=1, No=2, 0="Deleted by the surveyer", NA=NA)
+v307: schooling (a mess...)/turn into factor
+v234: age
+
+ADD 409 (TYPE OF WORKER!!!!)
 
 ```{r, eval=F}
 finalPME = fread("finalPME.csv")
@@ -49,6 +60,7 @@ fwrite(reducedPME, file = "reducedPME.csv")
 ```{r Reading Reduced PME file}
 reducedPME = fread("reducedPME.csv") %>% 
   mutate(v035 = as.factor(v035))
+original_reducedPME = reducedPME
 ```
 
 ## Merging Dataset with Macro Data
@@ -72,13 +84,15 @@ reducedPME = reducedPME %>%
   group_by(month_year = as.factor(paste0(as.character(v070),as.character(v075)))) %>% 
   mutate(PoorThreshold = quantile(realWage, probs=.2), 
          Poor = as.factor(ifelse(realWage<PoorThreshold, T, F)))
-```
 
-```{r Filters low income people}
-# length(unique(reducedPME$idind))
-reducedPME = reducedPME %>% 
+lowIncomeIdInd = reducedPME %>% 
   filter(Poor==T)
-# length(unique(reducedPME$idind))
+lowIncomeIdInd = unique(lowIncomeIdInd$idind)
+
+length(unique(reducedPME$idind))
+reducedPME = reducedPME %>% 
+  filter(idind %in% lowIncomeIdInd)
+length(unique(reducedPME$idind))
 # About 1/3 of people are flagged as "poor"
 ```
 
@@ -101,9 +115,35 @@ reducedPME = reducedPME[!is.na(reducedPME$lagRealWage),]
 reducedPME = reducedPME[!is.infinite(reducedPME$pctChangeWage),]
 ```
 
+## Checking issues with not enough observations
+
+```{r}
+numberIdind = reducedPME %>% 
+  group_by(idind) %>% 
+  summarise(n = n())
+numberIdind %>% group_by(n) %>% summarise(n()/nrow(numberIdind))
+
+numberIdind_full = original_reducedPME %>% 
+  filter(!is.na(v4191)) %>% 
+  group_by(idind) %>% 
+  summarise(n = n(), maxWage = max(v4191, na.rm = T))
+wagesPropr_numberObs = numberIdind_full %>% group_by(n) %>% summarise(prop=n()/nrow(numberIdind_full),
+                                               meanMaxWage = mean(maxWage, na.rm = T))
+# check if mean income varies by different number of observations
+ggplot(data=wagesPropr_numberObs,aes(x=n)) + 
+  geom_col(aes(y=meanMaxWage)) +
+  theme_minimal()
+
+ggplot(data=wagesPropr_numberObs,aes(x=n)) + 
+  geom_col(aes(y=prop)) +
+  theme_minimal()
+```
+
 ## Runs the regression
 
 ```{r}
+# should plot a sample of 100, maybe 150 people with their logWage vs inflationTax points 
+
 lm1 = lm(data=reducedPME, pctChangeWage ~ Inflation + lagInflation + ChangeInGDP + v035)
 summary(lm1)
 
@@ -120,5 +160,21 @@ plot(lm4)
 plot(cooks.distance(lm4) ~ reducedPME$realWage)
 ```
 
+```{r}
+# Trying to fit LMER models
+lmer1 <- lmer(log(realWage) ~ v035 + lagInflation + ChangeInGDP + (lagInflation | idind), data = reducedPME)
+summary(lmer1)
+
+# check if I need random slopes!!!
+
+# what happens if there are lots of individual observations?
+
+```
+
+## Writing full dataset
+
+```{r, eval=F}
+fwrite(reducedPME, "complete.df")
+```
 
 
