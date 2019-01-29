@@ -50,8 +50,8 @@ inflation = inflation %>% arrange(Year, Month) %>%
                      Date = lubridate::myd(paste(Month, Year, 1)))
 inflation = inflation %>%  mutate(Inflation = as.numeric(Inflation), # makes inflation an integer
                                   lagInflation = lag(Inflation),
-                                  inflationTax = Inflation/(Inflation+1),
-                                  lagInflationTax = lag(Inflation)/(lag(Inflation)+1))
+                                  inflationTax = Inflation/(Inflation+100),
+                                  lagInflationTax = lag(inflationTax))
 
 # creates df that has multiple columns (one per state)
 inflationWide = inflation %>% spread(Region, Inflation)
