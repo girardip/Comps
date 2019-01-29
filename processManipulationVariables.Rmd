@@ -32,7 +32,7 @@ for (fileCsv in listOfCsv[-1]){
           v301, v307, v234, idind) 
   stataCsv = bind_rows(stataCsv, currentFile)
 }
-# fwrite(stataCsv, "finalPME.csv")
+fwrite(stataCsv, "finalPME.csv")
 ```
 
 ```{r, eval=F}
