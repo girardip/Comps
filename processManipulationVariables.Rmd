@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(data.table)
+library(lme4)
 ```
 
 ## Importing STATA Exported .csvs and selecting variables of interest
