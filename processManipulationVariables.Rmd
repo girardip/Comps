@@ -95,14 +95,6 @@ reducedPME = reducedPME %>%
 # Check why most people have ~2.4 obs
 ```
 
-```{r Filters out incomplete individual obs}
-# This filters lots of stuff, because I will be taking out all the first observations, and many people only have 1-2 obs
-reducedPME = reducedPME[!is.na(reducedPME$lagRealWage),]
-
-# Also takes out NAN/Inf values for pct change in income
-reducedPME = reducedPME[!is.infinite(reducedPME$pctChangeWage),]
-```
-
 ## Checking issues with not enough observations
 
 ```{r}
@@ -148,7 +140,7 @@ plot(lm4)
 plot(cooks.distance(lm4) ~ reducedPME$realWage)
 ```
 
-```{r}
+```{r, eval=F}
 # Trying to fit LMER models
 lmer1 <- lmer(log(realWage) ~ v035 + lagInflation + ChangeInGDP + (lagInflation | idind), data = reducedPME)
 summary(lmer1)
