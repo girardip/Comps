@@ -84,6 +84,18 @@ AIC(lmer2)
 ```
 
 ```{r Working with fixed effects}
-
+lmer1_fe = update(lmer1, REML=F)
+lmer3_fe = update(lmer1_fe, . ~ . -lagInflationTax:Ethnicity -lagInflationTax:Literacy -lagInflationTax:Gender)
+summary(lmer1_fe)
+summary(lmer3_fe)
+D <- 2*(logLik(lmer1_fe)-logLik(lmer3_fe))
+1-pchisq(D, (length(summary(lmer1_fe)$coefficients[,1]))-length(summary(lmer3_fe)$coefficients[,1]))[[1]]
+# shorter model is appropriate
 ```
+
+```{r}
+# to-do: add variable type of work, run analysis with full dataset and check for significance, test diagnostics/assumptions 
+```
+
+
 
