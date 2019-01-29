@@ -97,7 +97,7 @@ reducedPME = reducedPME %>%
 
 ## Checking issues with not enough observations
 
-```{r}
+```{r, eval=F}
 numberIdind = reducedPME %>% 
   group_by(idind) %>% 
   summarise(n = n())
@@ -121,7 +121,7 @@ ggplot(data=wagesPropr_numberObs,aes(x=n)) +
 
 ## Runs the regression
 
-```{r}
+```{r, eval=F}
 # should plot a sample of 100, maybe 150 people with their logWage vs inflationTax points 
 
 lm1 = lm(data=reducedPME, pctChangeWage ~ Inflation + lagInflation + ChangeInGDP + v035)
