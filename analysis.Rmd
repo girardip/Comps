@@ -80,7 +80,7 @@ sample_complete.df =  complete.df %>% filter(idind %in% sampleInd)
 ```
 
 ```{r Testing random slopes, eval=F}
-lmer1 <- lmer(log(realWage) ~ lagInflationTax + ChangeInGDP +
+lmer1 <- lmer(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
                 (Gender + Ethnicity + Literacy + Schooling + EmploymentType)*lagInflationTax+
                 (1 | v035)+(lagInflation|v035:idind), data = complete.df)
 summary(lmer1)
@@ -132,12 +132,12 @@ onlyFull.df = complete.df %>%
 ```
 
 ```{r Fitting fixef}
-fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP +
+fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
                 (v035 +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType)*lagInflationTax,
             data = onlyFull.df, index = c("idind"), model = "within") 
 
-random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP +
+random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
                 (v035 +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType)*lagInflationTax,
             data = onlyFull.df, index = c("idind"), model = "random") 
@@ -159,3 +159,12 @@ think about lag gdp as an instrument
 check minimum wage thing
 
 maybe add age to the model
+
+## Variable Selection
+
+```{r}
+
+
+```
+
+

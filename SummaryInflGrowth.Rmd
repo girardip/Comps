@@ -49,9 +49,9 @@ inflation = inflation %>% arrange(Year, Month) %>%
               mutate(timeDiscrete = 1:n(),
                      Date = lubridate::myd(paste(Month, Year, 1)))
 inflation = inflation %>%  mutate(Inflation = as.numeric(Inflation), # makes inflation an integer
-                                  lagInflation = lag(Inflation),
+                                  lagInflation = dplyr::lag(Inflation),
                                   inflationTax = Inflation/(Inflation+100),
-                                  lagInflationTax = lag(inflationTax))
+                                  lagInflationTax = dplyr::lag(inflationTax))
 
 # creates df that has multiple columns (one per state)
 inflationWide = inflation %>% spread(Region, Inflation)
@@ -87,7 +87,8 @@ growthData = growthData %>% left_join(inflationBR, by = c("Month", "Year"))
 growthData = growthData[complete.cases(growthData),] 
 growthData = growthData %>% mutate(RealGDP = GDP_Nominal/PriceIndex)
 
-cleanGrowthData = growthData %>% select(Month, Year, RealGDP, Date) %>% mutate(ChangeInGDP = (RealGDP-lag(RealGDP))/lag(RealGDP))
+cleanGrowthData = growthData %>% select(Month, Year, RealGDP, Date) %>% mutate(ChangeInGDP = (RealGDP-dplyr::lag(RealGDP))/dplyr::lag(RealGDP),
+                                                                               lagChangeInGDP = dplyr::lag(ChangeInGDP))
 ````
 
 ```{r}
