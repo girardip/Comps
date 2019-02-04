@@ -4,6 +4,7 @@
 .Ruserdata
 PME/
 PME_stata/
+complete.csv
 finalPME.csv
 .httr-oauth
 PME_csv.zip

@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(data.table)
 library(lme4)
+library(plm)
 ```
 
 ## Importing df
@@ -38,9 +39,12 @@ ADD 409 (TYPE OF WORKER!!!!)
 complete.df = complete.df %>% mutate(Gender = as.factor(v203),
                        Ethnicity = as.factor(v208),
                        Literacy = as.factor(v301),
-                       Schooling = as.factor(v307)) %>% 
-                              select(-v040, -v050, -v203, -v208, -v301, -v307,
-                                     -starts_with("vD"), -p201)
+                       Schooling = as.factor(v307),
+                       EmploymentType = as.factor(v409),
+                       v035 = as.factor(v035),
+                       idind = as.factor(idind)) %>% 
+                              select(-v040, -v050, -v203, -v208, -v301, -v307, -v409,
+                                     -starts_with("vD"))
 complete.df$Schooling = as.factor(ifelse(is.na(complete.df$Schooling), "NoSchooling", complete.df$Schooling))
 levels(complete.df$Gender) = c("Male", "Female")
 levels(complete.df$Ethnicity) = c("White", "Black", "Yellow", "Mixed", "Native", "Ignored")
@@ -49,11 +53,12 @@ levels(complete.df$Schooling) = c("Primary", "HighSchool_1", "HighSchool_2",
                                   "MiddleSchool", "HighSchool_3", "College",
                                   "AdultsSchool", "PreSchool", "Graduate",
                                   "NoSchooling")
+levels(complete.df$EmploymentType) = c("Domestic", "Employee") #note that people who own their own business don't report income
 ```
 
 ## Visually checking for mixed effects
 
-```{r}
+```{r, cache=T, eval=F}
 set.seed(2)
 ggplot(complete.df %>% filter(idind %in% sample(complete.df$idind, size = 25)),
        aes(x=lagInflationTax, y=realWage)) +
@@ -65,15 +70,24 @@ ggplot(complete.df %>% filter(idind %in% sample(complete.df$idind, size = 25)),
 
 ## Fitting LME model
 
-```{r Testing random slopes}
-lmer1 <- lmer(log(realWage) ~ v035 + lagInflationTax + ChangeInGDP +
-                (Gender + Ethnicity + Literacy + Schooling)*lagInflationTax+
-                (lagInflation | idind), data = complete.df)
+Worrying about LME not being the ideal. Needs to test with Hausman test.
+
+
+```{r}
+set.seed(1)
+sampleInd = sample(complete.df$idind, size = length(complete.df$idind)/100)
+sample_complete.df =  complete.df %>% filter(idind %in% sampleInd)
+```
+
+```{r Testing random slopes, eval=F}
+lmer1 <- lmer(log(realWage) ~ lagInflationTax + ChangeInGDP +
+                (Gender + Ethnicity + Literacy + Schooling + EmploymentType)*lagInflationTax+
+                (1 | v035)+(lagInflation|v035:idind), data = complete.df)
 summary(lmer1)
 
 lmer2 = lmer(log(realWage) ~ v035 + lagInflationTax + ChangeInGDP +
                 (Gender + Ethnicity + Literacy + Schooling)*lagInflationTax+
-               (1 | idind), data = complete.df)
+               (1 | v035)+(1 | v035:idind), data = sample_complete.df)
 summary(lmer2)
 
 deviance_lme = 2*(logLik(lmer1)-logLik(lmer2))
@@ -83,7 +97,7 @@ AIC(lmer2)
 # needs random slopes, which means that people are impacted differently by inflation
 ```
 
-```{r Working with fixed effects}
+```{r Working with fixed effects, eval=F}
 lmer1_fe = update(lmer1, REML=F)
 lmer3_fe = update(lmer1_fe, . ~ . -lagInflationTax:Ethnicity -lagInflationTax:Literacy -lagInflationTax:Gender)
 summary(lmer1_fe)
@@ -93,9 +107,55 @@ D <- 2*(logLik(lmer1_fe)-logLik(lmer3_fe))
 # shorter model is appropriate
 ```
 
+## be sure to test with hausman 
+
+* remove people w fewer than 3 
+
+* run hausmann test 
+
+Decided not to have random effects for inflation coefficient so to avoid issues with hausmann test (trade-off)
+
+Checked with Katie, sampling expert, on potential issues with subsetting and decided to subset (issue with power may exist, but mostly for very specific interactions)
+
+#Selecting individuals with 8 observations
+
 ```{r}
-# to-do: add variable type of work, run analysis with full dataset and check for significance, test diagnostics/assumptions 
+idIndsObserved = complete.df %>% group_by(idind) %>% summarise(nObs = n())
+mean(idIndsObserved$nObs>4) #7.5% of individuals, or 33000 individuals, or ~250k observations
+sum(idIndsObserved$nObs>4)
+idsFull = idIndsObserved$idind[idIndsObserved$nObs==8]
 ```
 
+```{r Selecting only individuals with 8 observations}
+onlyFull.df = complete.df %>% 
+  filter(idind %in% idsFull)
+```
 
+```{r Fitting fixef}
+fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP +
+                (v035 +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType)*lagInflationTax,
+            data = onlyFull.df, index = c("idind"), model = "within") 
 
+random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP +
+                (v035 +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType)*lagInflationTax,
+            data = onlyFull.df, index = c("idind"), model = "random") 
+```
+
+```{r}
+summary(fixed)
+summary(random)
+```
+
+```{r}
+phtest(fixed, random)
+
+summary(complete.df$Ethnicity)
+summary(onlyFull.df$Ethnicity)
+```
+think about lag gdp as an instrument 
+
+check minimum wage thing
+
+maybe add age to the model
