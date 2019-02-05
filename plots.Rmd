@@ -1,0 +1,65 @@
+---
+title: "EDA Plots"
+author: "Pedro Girardi"
+date: "February 5, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary plots
+
+```{r}
+library(stargazer)
+library(tidyverse)
+library(lubridate)
+```
+
+```{r loads Data}
+load("finalModels.RData")
+```
+
+```{r}
+View(head(onlyFull.df))
+```
+
+```{r}
+summary(onlyFull.df)
+# keep region, age, v4191, inflation, price index, inflationTax, changeInGDP, realWage, poorthreshold, gender, ethnicity, literacy, schooling, employment type
+```
+```{r}
+# creates subset of df for preliminary plotting
+set.seed(1)
+sampled.df = sample_n(onlyFull.df, replace = F, size = nrow(onlyFull.df)/20)
+sampled.df = sampled.df %>% mutate(Date = ymd(Date))
+```
+
+```{r realWage x lagInflationTax}
+ggplot(sampled.df, aes(x=lagInflationTax, y=realWage)) +
+  geom_point(aes(col=Gender)) +
+  geom_smooth(method = "lm") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(sampled.df %>% mutate(Date = lubridate::ymd(Date)), aes(x=Date)) +
+  geom_line(aes(y=PoorThreshold)) +
+  theme_minimal()
+# peak in poor threshold every january (readjusted minimum wage)
+
+ggplot(sampled.df %>% 
+         mutate(Year = year(Date),
+                Month = month(Date)),
+       aes(x=Month, y=inflationTax)) + 
+  geom_line(aes(col=as.factor(paste0(Year, v035)))) +
+  geom_smooth(col="black", size=2) +
+  geom_hline(col="black", yintercept = 0) +
+  theme(legend.position="none")
+
+#still can't explain peak and drop in poor threshold
+# thought: maybe seasonality of GDP fucks up the analysis?
+```
+
+

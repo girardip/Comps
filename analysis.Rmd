@@ -129,15 +129,17 @@ idsFull = idIndsObserved$idind[idIndsObserved$nObs==8]
 ```{r Selecting only individuals with 8 observations}
 onlyFull.df = complete.df %>% 
   filter(idind %in% idsFull)
+
+rm(list=setdiff(ls(), "onlyFull.df"))
 ```
 
 ```{r Fitting fixef}
-fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
+fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + (v234 + I(v234^2))*lagInflationTax+
                 (v035 +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType)*lagInflationTax,
             data = onlyFull.df, index = c("idind"), model = "within") 
 
-random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
+random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + (v234 + I(v234^2))*lagInflationTax+
                 (v035 +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType)*lagInflationTax,
             data = onlyFull.df, index = c("idind"), model = "random") 
@@ -151,14 +153,16 @@ summary(random)
 ```{r}
 phtest(fixed, random)
 
-summary(complete.df$Ethnicity)
-summary(onlyFull.df$Ethnicity)
+# summary(complete.df$Ethnicity)
+# summary(onlyFull.df$Ethnicity)
 ```
 think about lag gdp as an instrument 
 
 check minimum wage thing
 
-maybe add age to the model
+check correlation of standard errors/selection of variables
+
+show examples of plots
 
 ## Variable Selection
 
