@@ -52,7 +52,7 @@ ggplot(sampled.df %>% mutate(Date = lubridate::ymd(Date)), aes(x=Date)) +
 ggplot(sampled.df %>% 
          mutate(Year = year(Date),
                 Month = month(Date)),
-       aes(x=Month, y=inflationTax)) + 
+       aes(x=Month, y=Inflation)) + 
   geom_line(aes(col=as.factor(paste0(Year, v035)))) +
   geom_smooth(col="black", size=2) +
   geom_hline(col="black", yintercept = 0) +
@@ -62,4 +62,7 @@ ggplot(sampled.df %>%
 # thought: maybe seasonality of GDP fucks up the analysis?
 ```
 
-
+```{r}
+ggplot(data = sampled.df, aes(x=Ethnicity))+
+  geom_bar(aes(fill=v035))
+```

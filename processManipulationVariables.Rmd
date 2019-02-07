@@ -36,19 +36,9 @@ for (fileCsv in listOfCsv[-1]){
 fwrite(stataCsv, "finalPME.csv")
 ```
 
-```{r, eval=F}
-finalPME = fread("finalPME.csv")
-
-# Sample 10% of households and select important columns
-hhSample = sample(finalPME$idind, length(unique(finalPME$idind))/20, replace = F)
-reducedPME = finalPME %>% filter(idind %in% hhSample)
-fwrite(reducedPME, file = "reducedPME.csv")
-```
-
 ```{r Reading Reduced PME file}
-reducedPME = fread("reducedPME.csv") %>% 
+reducedPME = fread("finalPME.csv") %>% 
   mutate(v035 = as.factor(v035))
-original_reducedPME = reducedPME
 ```
 
 ## Merging Dataset with Macro Data
@@ -67,28 +57,34 @@ reducedPME = left_join(reducedPME, macro.df, by=c("v035"="Region", "v070"="Month
 ```{r Flags low income people}
 reducedPME = reducedPME %>% 
   filter(!is.na(v4191),
-         v4191!=999999999) %>%
-  mutate(realWage = v4191/PriceIndex) %>%  
+         v4191!=999999999,
+         v4191!=0) %>%
+  mutate(realWage = v4191/PriceIndex) 
+
+# group by individual, create number of obs column and number of obs under povty line
+
+reducedPME = reducedPME %>%  
   group_by(month_year = as.factor(paste0(as.character(v070),as.character(v075)))) %>% 
   mutate(PoorThreshold = quantile(realWage, probs=.2), 
          Poor = as.factor(ifelse(realWage<PoorThreshold, T, F)))
 
-lowIncomeIdInd = reducedPME %>% 
-  filter(Poor==T)
-lowIncomeIdInd = unique(lowIncomeIdInd$idind)
-
-length(unique(reducedPME$idind))
 reducedPME = reducedPME %>% 
-  filter(idind %in% lowIncomeIdInd)
-length(unique(reducedPME$idind))
-# About 1/3 of people are flagged as "poor"
+  group_by(idind) %>% 
+  mutate(nObsInd = n(),
+         nObsPoor = sum(as.numeric(Poor)-1))
+```
+
+
+```{r Removing Poor People and People without 8 obs}
+reducedPME = reducedPME %>% 
+  filter(nObsPoor > 0, 
+         nObsInd == 8)
 ```
 
 ## Working with income variable
 
 ```{r Creates Lagged Income and change in income}
 reducedPME = reducedPME %>% 
-                filter(realWage > 0) %>%  #filters wage of 0
                 group_by(idind) %>%
                 mutate(lagRealWage = lag(realWage),
                        pctChangeWage = (realWage-lagRealWage)/(lagRealWage))
@@ -98,6 +94,8 @@ reducedPME = reducedPME %>%
 ## Checking issues with not enough observations
 
 ```{r, eval=F}
+# WONT WORK BECAUSE I CHANGED THE WAY THE DATASET WORKS
+
 numberIdind = reducedPME %>% 
   group_by(idind) %>% 
   summarise(n = n())
@@ -118,36 +116,6 @@ ggplot(data=wagesPropr_numberObs,aes(x=n)) +
   geom_col(aes(y=prop)) +
   theme_minimal()
 ```
-
-## Runs the regression
-
-```{r, eval=F}
-# should plot a sample of 100, maybe 150 people with their logWage vs inflationTax points 
-
-lm1 = lm(data=reducedPME, pctChangeWage ~ Inflation + lagInflation + ChangeInGDP + v035)
-summary(lm1)
-
-lm2 = update(lm1, realWage ~.)
-summary(lm2)
-
-lm3 = update(lm1, log(realWage) ~ .)
-summary(lm3)
-
-lm4 = lm(data=reducedPME, log(realWage) ~ inflationTax + lagInflationTax + ChangeInGDP + v035)
-summary(lm4)
-
-plot(lm4)
-plot(cooks.distance(lm4) ~ reducedPME$realWage)
-```
-
-```{r, eval=F}
-# Trying to fit LMER models
-lmer1 <- lmer(log(realWage) ~ v035 + lagInflation + ChangeInGDP + (lagInflation | idind), data = reducedPME)
-summary(lmer1)
-
-# check if I need random slopes!!!
-
-# what happens if there are lots of individual observations?
 
 ```
 

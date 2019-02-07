@@ -167,7 +167,7 @@ show examples of plots
 ## Variable Selection
 
 ```{r}
-
+fixed_vcovHC1 = coeftest(fixed, vcov. = vcovHC)
 
 ```
 
