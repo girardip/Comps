@@ -83,7 +83,7 @@ reducedPME = reducedPME %>%
 
 ## Working with income variable
 
-```{r Creates Lagged Income and change in income}
+```{r Creates Lagged Income and change in income, eval=F}
 reducedPME = reducedPME %>% 
                 group_by(idind) %>%
                 mutate(lagRealWage = lag(realWage),
