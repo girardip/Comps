@@ -81,6 +81,13 @@ reducedPME = reducedPME %>%
          nObsInd == 8)
 ```
 
+```{r}
+# creating factor variable on "depth" of poverty
+summary(reducedPME$nObsPoor)
+reducedPME = reducedPME %>% 
+  mutate(veryVulnerable = ifelse(nObsPoor>4, T, F))
+```
+
 ## Working with income variable
 
 ```{r Creates Lagged Income and change in income, eval=F}

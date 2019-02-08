@@ -14,6 +14,7 @@ library(tidyverse)
 library(data.table)
 library(lme4)
 library(plm)
+library(lmtest)
 ```
 
 ## Importing df
@@ -79,34 +80,6 @@ sampleInd = sample(complete.df$idind, size = length(complete.df$idind)/100)
 sample_complete.df =  complete.df %>% filter(idind %in% sampleInd)
 ```
 
-```{r Testing random slopes, eval=F}
-lmer1 <- lmer(log(realWage) ~ lagInflationTax + ChangeInGDP + v234 + I(v234^2)+
-                (Gender + Ethnicity + Literacy + Schooling + EmploymentType)*lagInflationTax+
-                (1 | v035)+(lagInflation|v035:idind), data = complete.df)
-summary(lmer1)
-
-lmer2 = lmer(log(realWage) ~ v035 + lagInflationTax + ChangeInGDP +
-                (Gender + Ethnicity + Literacy + Schooling)*lagInflationTax+
-               (1 | v035)+(1 | v035:idind), data = sample_complete.df)
-summary(lmer2)
-
-deviance_lme = 2*(logLik(lmer1)-logLik(lmer2))
-.5*(1-pchisq(deviance_lme, 2)) + .5*(1-pchisq(deviance_lme, 1)) #pvalue of 0 indicates you need the random slope! 
-AIC(lmer1)
-AIC(lmer2)
-# needs random slopes, which means that people are impacted differently by inflation
-```
-
-```{r Working with fixed effects, eval=F}
-lmer1_fe = update(lmer1, REML=F)
-lmer3_fe = update(lmer1_fe, . ~ . -lagInflationTax:Ethnicity -lagInflationTax:Literacy -lagInflationTax:Gender)
-summary(lmer1_fe)
-summary(lmer3_fe)
-D <- 2*(logLik(lmer1_fe)-logLik(lmer3_fe))
-1-pchisq(D, (length(summary(lmer1_fe)$coefficients[,1]))-length(summary(lmer3_fe)$coefficients[,1]))[[1]]
-# shorter model is appropriate
-```
-
 ## be sure to test with hausman 
 
 * remove people w fewer than 3 
@@ -117,32 +90,21 @@ Decided not to have random effects for inflation coefficient so to avoid issues 
 
 Checked with Katie, sampling expert, on potential issues with subsetting and decided to subset (issue with power may exist, but mostly for very specific interactions)
 
-#Selecting individuals with 8 observations
-
-```{r}
-idIndsObserved = complete.df %>% group_by(idind) %>% summarise(nObs = n())
-mean(idIndsObserved$nObs>4) #7.5% of individuals, or 33000 individuals, or ~250k observations
-sum(idIndsObserved$nObs>4)
-idsFull = idIndsObserved$idind[idIndsObserved$nObs==8]
-```
-
-```{r Selecting only individuals with 8 observations}
-onlyFull.df = complete.df %>% 
-  filter(idind %in% idsFull)
-
-rm(list=setdiff(ls(), "onlyFull.df"))
-```
 
 ```{r Fitting fixef}
-fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + (v234 + I(v234^2))*lagInflationTax+
+fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
                 (v035 +Gender + Ethnicity + Literacy +
-                   Schooling + EmploymentType)*lagInflationTax,
-            data = onlyFull.df, index = c("idind"), model = "within") 
+                   Schooling + EmploymentType +
+                   v234 + I(v234^2) + as.factor(v070)+
+                   veryVulnerable)*lagInflationTax,
+            data = complete.df, index = c("idind"), model = "within") 
 
-random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + (v234 + I(v234^2))*lagInflationTax+
+random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
                 (v035 +Gender + Ethnicity + Literacy +
-                   Schooling + EmploymentType)*lagInflationTax,
-            data = onlyFull.df, index = c("idind"), model = "random") 
+                   Schooling + EmploymentType +
+                   v234 + I(v234^2) + as.factor(v070)+
+                   veryVulnerable)*lagInflationTax,
+            data = complete.df, index = c("idind"), model = "random") 
 ```
 
 ```{r}
@@ -168,7 +130,5 @@ show examples of plots
 
 ```{r}
 fixed_vcovHC1 = coeftest(fixed, vcov. = vcovHC)
-
+fixed_vcovHC1
 ```
-
-
