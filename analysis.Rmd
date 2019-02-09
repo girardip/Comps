@@ -101,20 +101,20 @@ fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP +
                    veryVulnerable)*lagInflationTax,
             data = complete.df, index = c("idind"), model = "within") 
 
-random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
-                (v035 +Gender + Ethnicity + Literacy +
-                   Schooling + EmploymentType +
-                   v234 + I(v234^2) + as.factor(v070)+
-                   veryVulnerable)*lagInflationTax,
-            data = complete.df, index = c("idind"), model = "random") 
+# random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
+#                 (v035 +Gender + Ethnicity + Literacy +
+#                    Schooling + EmploymentType +
+#                    v234 + I(v234^2) + as.factor(v070)+
+#                    veryVulnerable)*lagInflationTax,
+#             data = complete.df, index = c("idind"), model = "random") 
 ```
 
 ```{r}
 summary(fixed)
-summary(random)
+# summary(random)
 ```
 
-```{r}
+```{r, eval=F}
 phtest(fixed, random)
 
 # summary(complete.df$Ethnicity)
@@ -136,6 +136,18 @@ fixed_vcovHC1
 ```
 
 ```{r}
-linearHypothesis(fixed, c("GenderFemale"), vcov. = fixed_vcovHC1)
+fixed1.coefs = names(coef(fixed))
+
+linearHypothesis(model = fixed, c(coefs[grep("Ethnicity", coefs)],coefs[grep("GDP", coefs)], "lagInflationTax:v234", "lagInflationTax:I(v234^2)"), white.adust=T)
+```
+
+```{r}
+fixed2 = update(fixed, . ~ . -Ethnicity -ChangeInGDP -ChangeInGDP:lagInflationTax -ChangeInGDP:lagChangeInGDP 
+                -lagChangeInGDP -lagChangeInGDP:lagInflationTax -Ethnicity:lagInflationTax 
+                -lagInflationTax:v234 -lagInflationTax:I(v234^2))
+summary(fixed2)
+fixed_vcovHC2 = coeftest(fixed2, vcov. = vcovHC)
+fixed_vcovHC2
 
 ```
+
