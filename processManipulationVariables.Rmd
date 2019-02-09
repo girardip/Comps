@@ -88,6 +88,27 @@ reducedPME = reducedPME %>%
   mutate(veryVulnerable = ifelse(nObsPoor>4, T, F))
 ```
 
+## Some people have different genders!!!! Probably an issue. Remove variables
+
+```{r}
+peopleDiffGenders = reducedPME %>%
+  group_by(idind) %>%
+  summarise(GenderObs = sum(v203)) %>% 
+  filter(!GenderObs%in%c(8,16)) %>% 
+  select(-GenderObs)
+peopleDiffGenders = peopleDiffGenders$idind
+
+# peopleDiffStates = reducedPME %>%
+#   group_by(idind) %>%
+#   summarise(RegionalObs = dim(table((v035)))) %>% 
+#   filter(RegionalObs!=1) %>% 
+#   select(-RegionalObs)
+# # ok no one in different states
+
+reducedPME = reducedPME %>% 
+  filter(!idind %in% peopleDiffGenders)
+```
+
 ## Working with income variable
 
 ```{r Creates Lagged Income and change in income, eval=F}
@@ -128,7 +149,7 @@ ggplot(data=wagesPropr_numberObs,aes(x=n)) +
 
 ## Writing full dataset
 
-```{r, eval=F}
+```{r}
 fwrite(reducedPME, "complete.csv")
 ```
 
