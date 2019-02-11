@@ -136,8 +136,7 @@ fixed_vcovHC1
 ```
 
 ```{r}
-fixed1.coefs = names(coef(fixed))
-
+coefs = names(coef(fixed))
 linearHypothesis(model = fixed, c(coefs[grep("Ethnicity", coefs)],coefs[grep("GDP", coefs)], "lagInflationTax:v234", "lagInflationTax:I(v234^2)"), white.adust=T)
 ```
 
@@ -148,6 +147,23 @@ fixed2 = update(fixed, . ~ . -Ethnicity -ChangeInGDP -ChangeInGDP:lagInflationTa
 summary(fixed2)
 fixed_vcovHC2 = coeftest(fixed2, vcov. = vcovHC)
 fixed_vcovHC2
-
 ```
 
+```{r}
+coefs = names(coef(fixed2))
+linearHypothesis(model = fixed2, c(coefs[grep("lagInflationTax:Gen", coefs)],coefs[grep("lagInflationTax:Lit", coefs)],coefs[grep("lagInflationTax:Emp", coefs)]), white.adust=T)
+# maybe recode factors to have mid year vs rest?
+```
+
+```{r}
+fixed3 = update(fixed2, . ~ . -lagInflationTax:Gender -lagInflationTax:Literacy -lagInflationTax:EmploymentType)
+summary(fixed3)
+fixed_vcovHC3 = coeftest(fixed3, vcov. = vcovHC)
+fixed_vcovHC3
+```
+
+```{r}
+coefs = names(coef(fixed2))
+linearHypothesis(model = fixed3, c(coefs[grep("Tax:Sch", coefs)]), white.adust=T)
+# maybe recode factors to have mid year vs rest?
+```
