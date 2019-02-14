@@ -23,6 +23,7 @@ library(car)
 
 ```{r}
 complete.df = fread("complete.csv")
+colnames(complete.df)[c(1,4,5)] = c("State", "Age", "Nominal Income")
 ```
 
 ## Recoding Variables
@@ -101,12 +102,12 @@ fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP +
                    veryVulnerable)*lagInflationTax,
             data = complete.df, index = c("idind"), model = "within") 
 
-# random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
-#                 (v035 +Gender + Ethnicity + Literacy +
-#                    Schooling + EmploymentType +
-#                    v234 + I(v234^2) + as.factor(v070)+
-#                    veryVulnerable)*lagInflationTax,
-#             data = complete.df, index = c("idind"), model = "random") 
+random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
+                (v035 +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType +
+                   v234 + I(v234^2) + as.factor(v070)+
+                   veryVulnerable)*lagInflationTax,
+            data = complete.df, index = c("idind"), model = "random") 
 ```
 
 ```{r}
@@ -114,7 +115,7 @@ summary(fixed)
 # summary(random)
 ```
 
-```{r, eval=F}
+```{r}
 phtest(fixed, random)
 
 # summary(complete.df$Ethnicity)

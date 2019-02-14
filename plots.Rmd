@@ -15,10 +15,12 @@ knitr::opts_chunk$set(echo = TRUE)
 library(stargazer)
 library(tidyverse)
 library(lubridate)
+library(xtable)
 ```
 
 ```{r loads Data}
 load("finalModels.RData")
+colnames(complete.df)[c(1,4,5)] = c("State", "Age", "Nominal Income")
 ```
 
 ```{r}
@@ -29,6 +31,13 @@ View(head(complete.df))
 summary(complete.df)
 # keep region, age, v4191, inflation, price index, inflationTax, changeInGDP, realWage, poorthreshold, gender, ethnicity, literacy, schooling, employment type
 ```
+
+```{r, results='asis'}
+stargazer(complete.df[,-c(1,2,3,6,9,10,11,12,14,16,18,21)], digits=2, nobs = F, column.sep.width = "3pt")
+print(xtable(summary(complete.df[,c(24:26)])), include.rownames = F)
+print(xtable(summary(complete.df[,c(27:28,1)])), include.rownames = F)
+```
+
 ```{r, eval=F}
 # creates subset of df for preliminary plotting
 set.seed(1)
@@ -37,21 +46,23 @@ sampled.df = sampled.df %>% mutate(Date = ymd(Date))
 ```
 
 ```{r realWage x lagInflationTax}
-ggplot(complete.df, aes(x=lagInflationTax, y=realWage)) +
+plot1=ggplot(complete.df, aes(x=lagInflationTax, y=realWage)) +
   geom_point(aes(col=Gender)) +
   geom_smooth(method = "lm") +
-  theme_minimal()
+  theme_minimal()+ scale_color_brewer(palette="Blues")
 
-ggplot(complete.df, aes(x=lagInflationTax, y=realWage)) +
+plot2=ggplot(complete.df, aes(x=lagInflationTax, y=realWage)) +
   geom_point(aes(col=Schooling)) +
   labs(title="Real Wage on Lag Inflation Tax, by Schooling", 
-       y="Real Wage",
+       y="log(Real Wage)",
        x="Lag Inflation Tax") + 
-  theme_minimal()
+  scale_y_continuous(trans='log2')+
+  geom_smooth(method = "lm", se=F)+
+  theme_minimal()+ scale_color_brewer(palette="Set3")
 ```
 
 ```{r}
-ggplot(complete.df %>% mutate(Date = lubridate::ymd(Date)), aes(x=Date)) +
+plot3=ggplot(complete.df %>% mutate(Date = lubridate::ymd(Date)), aes(x=Date)) +
   geom_line(aes(y=PoorThreshold)) +
   labs(title="Change in Poverty Threshold (real wage)",
        y="Poor Threshold",
@@ -59,11 +70,11 @@ ggplot(complete.df %>% mutate(Date = lubridate::ymd(Date)), aes(x=Date)) +
   theme_minimal()
 # peak in poor threshold every january (readjusted minimum wage)
 
-ggplot(complete.df %>% 
+plot4=ggplot(complete.df %>% 
          mutate(Year = year(Date),
                 Month = month(Date)),
        aes(x=Month, y=Inflation)) + 
-  geom_line(aes(col=as.factor(paste0(Year, v035)))) +
+  geom_line(aes(col=as.factor(paste0(Year, State)))) +
   labs(title="Inflation Seasonality, colored by Region") +
   theme_minimal()+
   theme(legend.position="none")
@@ -73,16 +84,32 @@ ggplot(complete.df %>%
 ```
 
 ```{r}
-ggplot(data = complete.df, aes(x=Ethnicity))+
-  geom_bar(aes(fill=v035)) +
+plot5=ggplot(data = complete.df, aes(x=Ethnicity))+
+  geom_bar(aes(fill=State)) +
   labs(title="Observations per race, color by state", 
        y="Observations")+
-  theme_minimal()
+  theme_minimal()+ scale_fill_brewer(palette="Blues")
 
-ggplot(data=complete.df, aes(x=nObsPoor)) +
+plot6=ggplot(data=complete.df, aes(x=nObsPoor)) +
   geom_histogram(aes(fill=Schooling), binwidth = .5) +
   labs(title="Number of observations below poverty threshold by Schooling",
        x="Observions below poverty threshold",
        y="Number of cases") +
-  theme_minimal()
+  theme_minimal()+
+  theme_minimal()+ scale_fill_brewer(palette="Set3")
+
+plot7=ggplot(data=complete.df, aes(x=Age)) +
+  geom_bar(aes(fill=Schooling)) +
+  labs(title="Schooling versus Age",
+       y="Number of cases") +
+  theme_minimal() + scale_fill_brewer(palette="Set3")
+```
+
+```{r}
+ggsave("Plots/plot2.jpeg", plot2, device = "jpeg")
+ggsave("Plots/plot3.jpeg", plot3, device = "jpeg")
+ggsave("Plots/plot4.jpeg", plot4, device = "jpeg")
+ggsave("Plots/plot5.jpeg", plot5, device = "jpeg")
+ggsave("Plots/plot6.jpeg", plot6, device = "jpeg")
+ggsave("Plots/plot7.jpeg", plot7, device = "jpeg")
 ```
