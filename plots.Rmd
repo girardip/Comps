@@ -16,13 +16,11 @@ library(stargazer)
 library(tidyverse)
 library(lubridate)
 library(xtable)
+library(gridExtra)
 ```
 
 ```{r loads Data}
 load("finalModels.RData")
-colnames(complete.df)[c(1,7,5,4)] = c("State", "Age", "Nominal Income","Month")
-complete.df$State = as.factor(complete.df$State)
-levels(complete.df$State)[5]="São Paulo"
 ```
 
 ```{r}
@@ -86,7 +84,7 @@ plot4=ggplot(complete.df %>%
 ```
 
 ```{r}
-plot5=ggplot(data = complete.df %>% mutate(State=ifelse(State==""), aes(x=Ethnicity))+
+plot5=ggplot(data = complete.df, aes(x=Ethnicity))+
   geom_bar(aes(fill=State)) +
   labs(title="Observations per race, color by state", 
        y="Observations")+

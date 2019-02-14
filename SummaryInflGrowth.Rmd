@@ -66,7 +66,8 @@ round(cor(inflationWide[5:11]), 3)
 
 
 ````{r Plotting}
-ggplot(inflation, aes(x=Date, y=Inflation)) + geom_line(aes(col=Region)) + theme_minimal()
+plot1=ggplot(inflation, aes(x=Date, y=Inflation)) + geom_line(aes(col=Region)) + theme_minimal()+ theme(legend.position="none")
+plot1
 ````
 
 
@@ -93,10 +94,19 @@ cleanGrowthData = growthData %>% select(Month, Year, RealGDP, Date) %>% mutate(C
 
 ```{r}
 summary(cleanGrowthData[,c(3,5)])
-ggplot(cleanGrowthData, aes(x=Date, y=RealGDP)) + geom_line() + theme_minimal()
-ggplot(cleanGrowthData, aes(x=Date, y=ChangeInGDP)) + geom_line() + theme_minimal()
+plot2=ggplot(cleanGrowthData, aes(x=Date, y=RealGDP)) + geom_line() + theme_minimal()
+plot3=ggplot(cleanGrowthData, aes(x=Date, y=ChangeInGDP)) + geom_line() + theme_minimal()
 summary(lm(data=cleanGrowthData, ChangeInGDP ~ as.factor(Month))) # there seems to be some seasonality 
 summary(lm(data=inflation, Inflation ~ as.factor(Month))) # there seems to be some seasonality 
+
+plot4=ggplot(inflation, aes(x=Month, y=Inflation)) + 
+  geom_line(aes(col=as.factor(paste0(Year, Region)))) +
+  labs(title="Inflation Seasonality, colored by Region") +
+  theme_minimal()+
+  theme(legend.position="none")
+plot4
+
+
 ```
 
 
@@ -105,5 +115,15 @@ combined.df = left_join(inflation, cleanGrowthData)
 data.table::fwrite(combined.df, "macrodata.csv")
 ```
 
+```{r}
+ggsave("Plots/plot1_macro.jpeg", plot1, device = "jpeg", width = 6, height=6, units="in")
+ggsave("Plots/plot3_macro.jpeg", plot3, device = "jpeg", width = 6, height=6, units="in")
+ggsave("Plots/plot4_macro.jpeg", plot4, device = "jpeg", width = 6, height=6, units="in")
+ggsave("Plots/plot2_macro.jpeg", plot2, device = "jpeg", width = 6, height=6, units="in")
 
+grid1=grid.arrange(plot1,plot4)
+grid2=grid.arrange(plot3,plot2)
+ggsave("Plots/grid1.jpeg", grid1, device = "jpeg", width = 6, height=8, units="in")
+ggsave("Plots/grid2.jpeg", grid2, device = "jpeg", width = 6, height=8, units="in")
+```
 
