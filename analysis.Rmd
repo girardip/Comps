@@ -23,7 +23,9 @@ library(car)
 
 ```{r}
 complete.df = fread("complete.csv")
-colnames(complete.df)[c(1,4,5)] = c("State", "Age", "Nominal Income")
+colnames(complete.df)[c(1,7,5,4)] = c("State", "Age", "Nominal Income","Month")
+complete.df$State = as.factor(complete.df$State)
+levels(complete.df$State)[5]="São Paulo"
 ```
 
 ## Recoding Variables
@@ -45,7 +47,6 @@ complete.df = complete.df %>% mutate(Gender = as.factor(v203),
                        Literacy = as.factor(v301),
                        Schooling = as.factor(v307),
                        EmploymentType = as.factor(v409),
-                       v035 = as.factor(v035),
                        idind = as.factor(idind)) %>% 
                               select(-v040, -v050, -v203, -v208, -v301, -v307, -v409,
                                      -starts_with("vD"))
@@ -96,16 +97,16 @@ Checked with Katie, sampling expert, on potential issues with subsetting and dec
 
 ```{r Fitting fixef}
 fixed = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
-                (v035 +Gender + Ethnicity + Literacy +
+                (State +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType +
-                   v234 + I(v234^2) + as.factor(v070)+
+                   Age + I(Age^2) + as.factor(Month)+
                    veryVulnerable)*lagInflationTax,
             data = complete.df, index = c("idind"), model = "within") 
 
 random = plm(log(realWage) ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
-                (v035 +Gender + Ethnicity + Literacy +
+                (State +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType +
-                   v234 + I(v234^2) + as.factor(v070)+
+                   Age + I(Age^2) + as.factor(Month)+
                    veryVulnerable)*lagInflationTax,
             data = complete.df, index = c("idind"), model = "random") 
 ```
@@ -138,13 +139,13 @@ fixed_vcovHC1
 
 ```{r}
 coefs = names(coef(fixed))
-linearHypothesis(model = fixed, c(coefs[grep("Ethnicity", coefs)],coefs[grep("GDP", coefs)], "lagInflationTax:v234", "lagInflationTax:I(v234^2)"), white.adust=T)
+linearHypothesis(model = fixed, c(coefs[grep("Ethnicity", coefs)],coefs[grep("GDP", coefs)], "lagInflationTax:Age", "lagInflationTax:I(Age^2)"), white.adust=T)
 ```
 
 ```{r}
 fixed2 = update(fixed, . ~ . -Ethnicity -ChangeInGDP -ChangeInGDP:lagInflationTax -ChangeInGDP:lagChangeInGDP 
                 -lagChangeInGDP -lagChangeInGDP:lagInflationTax -Ethnicity:lagInflationTax 
-                -lagInflationTax:v234 -lagInflationTax:I(v234^2))
+                -lagInflationTax:Age -lagInflationTax:I(Age^2))
 summary(fixed2)
 fixed_vcovHC2 = coeftest(fixed2, vcov. = vcovHC)
 fixed_vcovHC2
@@ -167,4 +168,9 @@ fixed_vcovHC3
 coefs = names(coef(fixed2))
 linearHypothesis(model = fixed3, c(coefs[grep("Tax:Sch", coefs)]), white.adust=T)
 # maybe recode factors to have mid year vs rest?
+# save.image("~/Comps/finalModels.RData")
+stargazer(fixed_vcovHC3, 
+          type = "latex", single.row = T, 
+          dep.var.caption = "log(Real Wage)", 
+          title = "Final Regression Model", font.size = "small")
 ```
