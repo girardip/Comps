@@ -17,6 +17,7 @@ library(plm)
 library(lmtest)
 library(sandwich)
 library(car)
+library(xtable)
 ```
 
 ## Importing df
@@ -169,8 +170,64 @@ coefs = names(coef(fixed2))
 linearHypothesis(model = fixed3, c(coefs[grep("Tax:Sch", coefs)]), white.adust=T)
 # maybe recode factors to have mid year vs rest?
 # save.image("~/Comps/finalModels.RData")
+```
+
+
+```{r}
 stargazer(fixed_vcovHC3, 
           type = "latex", single.row = T, 
           dep.var.caption = "log(Real Wage)", 
           title = "Final Regression Model", font.size = "small")
 ```
+
+```{r}
+# CIs for 1% month inflation tax?
+
+coefs.fixed3 = data.frame(sumCoefs = c(sum(fixed3$coefficients[c(1)]), #base
+sum(fixed3$coefficients[c(1,39)]), #base no shooling
+sum(fixed3$coefficients[c(1,39,51)]), #base no shooling, vulnerable
+sum(fixed3$coefficients[c(1,28)]), #base, RJ
+sum(fixed3$coefficients[c(1,39,28)]), #base no shooling, RJ
+sum(fixed3$coefficients[c(1,39,51,28)]) #base no shooling, vulnerable, RJ
+))
+
+coefs.fixed3 = coefs.fixed3 %>% 
+  mutate(change_01pct = round((exp(sumCoefs/1000)-1)*100, 2),
+         change_1pct = round((exp(sumCoefs/100)-1)*100, 2),
+         change_3pct = round((exp(sumCoefs/100*3)-1)*100, 2),
+         DemographicGroup = c("Base",
+                              "Base with no schooling",
+                              "Base no schooling, very vulnerable",
+                              "Base, RJ",
+                              "Base, RJ, no schooling",
+                              "Base, RJ, no schooling, vulnerable"))
+coefs.fixed3 = coefs.fixed3[,c(5,2,3,4)]
+print.xtable(xtable(coefs.fixed3, caption = c("Changes in Income for Demographic Groups")),
+             include.rownames=F)
+
+# a = pvcovHC(fixed3, method = "white2", type="HC1", "group")
+```
+
+```{r}
+# creates vcov narrow table
+fixed3_interactionCoefs = names(fixed3$coefficients[-c(2:25)])
+reduced_vcov3 = vcov_fixed3[fixed3_interactionCoefs,fixed3_interactionCoefs]
+reduced_vcov3 = data.frame(row.names = rownames(reduced_vcov3),
+                              typeFactor = c("Base", rep("State",5), rep("Schooling", 9), rep("Month", 11), "veryVulnerable"),
+                              numberFactor = as.integer(c(1, 1:5, 1:9, 1:11, 1)),
+                              reduced_vcov3) %>%
+  rownames_to_column() %>%
+  tidyr::gather(key = "key", value="value", -c(1,2,3))
+
+# creates data frame with all 1440 cases
+cases.df = data.frame(Base = rep(1, 1440),
+           State = rep(0:5, 1440/6),
+           Schooling = rep(rep(0:9, each=6),1440/(6*10)),
+           Month = rep(rep(rep(0:11, each=10), each=6), 1440/(6*10*12)),
+           veryVulnerable = rep(0:1, each=720))
+
+coefSE = 
+
+
+```
+

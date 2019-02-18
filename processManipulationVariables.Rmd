@@ -69,7 +69,7 @@ reducedPME = reducedPME %>%
          Poor = as.factor(ifelse(realWage<PoorThreshold, T, F)))
 
 reducedPME = reducedPME %>% 
-  group_by(idind) %>% 
+  group_by(idind) %>%
   mutate(nObsInd = n(),
          nObsPoor = sum(as.numeric(Poor)-1))
 ```
@@ -79,6 +79,8 @@ reducedPME = reducedPME %>%
 reducedPME = reducedPME %>% 
   filter(nObsPoor > 0, 
          nObsInd == 8)
+
+# ggplot(onlypoorwages, aes(x=as.factor(n), y=meanWage)) + geom_boxplot(outlier.shape = NA) + ylim(c(0,500)) + theme_minimal() + labs(y="Individual Mean Real Wage", x="Number of individual observations")
 ```
 
 ```{r}
