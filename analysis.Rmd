@@ -249,47 +249,52 @@ cases.df = data.frame(Base = rep(1, 1440),
            veryVulnerable = rep(0:1, each=720))
 
 # loop over all possible coefficient combos
-originalNrow = nrow(vcovInteractions)
-for (i in 1:nrow(cases.df[1,])){
-  filteredVcov = vcovInteractions
-  indexRed = stateIndex[-cases.df$State[i]]
-  if (length(indexRed)!=0) {
-    filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
-  } else {
-    filteredVcov = filteredVcov[-stateIndex[-1],-stateIndex[-1]]
-  }
-  print(paste(i, sum(filteredVcov)))
-  modNrow = nrow(filteredVcov)
-    for (i in 1:nrow(cases.df[1,])){
-    indexRed = educIndex[-cases.df$Schooling[i]]
-    if (length(indexRed)!=0) {
-      filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
-    } else {
-      filteredVcov = filteredVcov[-educIndex[-1],-educIndex[-1]]
-    }
-    print(paste(i, sum(filteredVcov)))
+covarianceValues = double(length=nrow(cases.df))
+          for (i in 1:nrow(cases.df[,])){
+          filteredVcov = vcovInteractions
+          if(cases.df$veryVulnerable[i]==0){
+                 filteredVcov = filteredVcov[-27,-27]}
+          # indexRed = vulnerableIndex[-cases.df$veryVulnerable[i]]
+          # if (length(indexRed)!=0) {
+          #   filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+          # } else {
+          #   filteredVcov = filteredVcov[-vulnerableIndex[-1],-vulnerableIndex[-1]]
+          # }
+          # print(paste(i, sum(filteredVcov)))
+          
     
-      for (i in 1:nrow(cases.df[1,])){
+      # for (i in 1:nrow(cases.df[1,])){
       indexRed = monthIndex[-cases.df$Month[i]]
       if (length(indexRed)!=0) {
         filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
       } else {
         filteredVcov = filteredVcov[-monthIndex[-1],-monthIndex[-1]]
       }
-      print(paste(i, sum(filteredVcov)))
+      # print(paste(i, sum(filteredVcov)))
       
-          for (i in 1:nrow(cases.df[1,])){
-          indexRed = vulnerableIndex[-cases.df$veryVulnerable[i]]
-          if (length(indexRed)!=0) {
-            filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
-          } else {
-            filteredVcov = filteredVcov[-vulnerableIndex[-1],-vulnerableIndex[-1]]
-          }
-          print(paste(i, sum(filteredVcov)))
-}}}}
+    # for (i in 1:nrow(cases.df[1,])){
+    indexRed = educIndex[-cases.df$Schooling[i]]
+    if (length(indexRed)!=0) {
+      filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+    } else {
+      filteredVcov = filteredVcov[-educIndex[-1],-educIndex[-1]]
+    }
+    # print(paste(i, sum(filteredVcov)))
+    
+    # for (i in 1:nrow(cases.df[1,])){
+  indexRed = stateIndex[-cases.df$State[i]]
+  if (length(indexRed)!=0) {
+    filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+  } else {
+    filteredVcov = filteredVcov[-stateIndex[-1],-stateIndex[-1]]
+  }
+  # print(paste(i, sum(filteredVcov)))
+  covarianceValues[i]=sum(filteredVcov)
+  # print(i)
+}
 
-  # inside the loop, add upp all the entries in the matrix to get the Variance
-
+cases.df$covarianceValues = covarianceValues
+cases.df$se = sqrt(cases.df$covarianceValues)
 # convert variances into SEs
 ```
 
