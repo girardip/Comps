@@ -208,7 +208,7 @@ print.xtable(xtable(coefs.fixed3, caption = c("Changes in Income for Demographic
 # a = pvcovHC(fixed3, method = "white2", type="HC1", "group")
 ```
 
-```{r}
+```{r, eval = F}
 # creates vcov narrow table
 fixed3_interactionCoefs = names(fixed3$coefficients[-c(2:25)])
 reduced_vcov3 = vcov_fixed3[fixed3_interactionCoefs,fixed3_interactionCoefs]
@@ -228,6 +228,38 @@ cases.df = data.frame(Base = rep(1, 1440),
 
 coefSE = 
 
+```
 
+```{r}
+# create matrix with all interaction terms
+vcovInteractions = vcov_fixed3[-c(2:25), -c(2:25)]
+
+# find all possible combos
+stateIndex = c(0,2:6)
+educIndex = c(0,7:15)
+monthIndex = c(0,16:26)
+vulnerableIndex = c(0,27)
+
+length(stateIndex)*length(educIndex)*length(monthIndex)*length(vulnerableIndex)
+# create DF with all possible combos
+cases.df = data.frame(Base = rep(1, 1440),
+           State = rep(stateIndex, 1440/6),
+           Schooling = rep(rep(educIndex, each=6),1440/(6*10)),
+           Month = rep(rep(rep(monthIndex, each=10), each=6), 1440/(6*10*12)),
+           veryVulnerable = rep(0:1, each=720))
+
+# loop over all possible coefficient combos
+for (i in 1:nrow(cases.df[2,])){
+  filteredVcov= vcovInteractions
+  indexRed = stateIndex[-cases.df$State[i]]
+  filteredVcov = ifelse(length(indexRed)!=0,
+                         filteredVcov[-indexRed, -indexRed],
+                         filteredVcov[-stateIndex[-1],-stateIndex[-1]])
+  print(paste0(i, rownames(filteredVcov), filteredVcov))
+}
+
+  # inside the loop, add upp all the entries in the matrix to get the Variance
+
+# convert variances into SEs
 ```
 
