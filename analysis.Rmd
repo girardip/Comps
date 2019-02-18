@@ -240,7 +240,7 @@ educIndex = c(0,7:15)
 monthIndex = c(0,16:26)
 vulnerableIndex = c(0,27)
 
-length(stateIndex)*length(educIndex)*length(monthIndex)*length(vulnerableIndex)
+# length(stateIndex)*length(educIndex)*length(monthIndex)*length(vulnerableIndex) # length checks ok 1440
 # create DF with all possible combos
 cases.df = data.frame(Base = rep(1, 1440),
            State = rep(stateIndex, 1440/6),
@@ -249,14 +249,44 @@ cases.df = data.frame(Base = rep(1, 1440),
            veryVulnerable = rep(0:1, each=720))
 
 # loop over all possible coefficient combos
-for (i in 1:nrow(cases.df[2,])){
-  filteredVcov= vcovInteractions
+originalNrow = nrow(vcovInteractions)
+for (i in 1:nrow(cases.df[1,])){
+  filteredVcov = vcovInteractions
   indexRed = stateIndex[-cases.df$State[i]]
-  filteredVcov = ifelse(length(indexRed)!=0,
-                         filteredVcov[-indexRed, -indexRed],
-                         filteredVcov[-stateIndex[-1],-stateIndex[-1]])
-  print(paste0(i, rownames(filteredVcov), filteredVcov))
-}
+  if (length(indexRed)!=0) {
+    filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+  } else {
+    filteredVcov = filteredVcov[-stateIndex[-1],-stateIndex[-1]]
+  }
+  print(paste(i, sum(filteredVcov)))
+  modNrow = nrow(filteredVcov)
+    for (i in 1:nrow(cases.df[1,])){
+    indexRed = educIndex[-cases.df$Schooling[i]]
+    if (length(indexRed)!=0) {
+      filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+    } else {
+      filteredVcov = filteredVcov[-educIndex[-1],-educIndex[-1]]
+    }
+    print(paste(i, sum(filteredVcov)))
+    
+      for (i in 1:nrow(cases.df[1,])){
+      indexRed = monthIndex[-cases.df$Month[i]]
+      if (length(indexRed)!=0) {
+        filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+      } else {
+        filteredVcov = filteredVcov[-monthIndex[-1],-monthIndex[-1]]
+      }
+      print(paste(i, sum(filteredVcov)))
+      
+          for (i in 1:nrow(cases.df[1,])){
+          indexRed = vulnerableIndex[-cases.df$veryVulnerable[i]]
+          if (length(indexRed)!=0) {
+            filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+          } else {
+            filteredVcov = filteredVcov[-vulnerableIndex[-1],-vulnerableIndex[-1]]
+          }
+          print(paste(i, sum(filteredVcov)))
+}}}}
 
   # inside the loop, add upp all the entries in the matrix to get the Variance
 
