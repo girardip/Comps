@@ -233,6 +233,7 @@ coefSE =
 ```{r}
 # create matrix with all interaction terms
 vcovInteractions = vcov_fixed3[-c(2:25), -c(2:25)]
+infCoefs = fixed3$coefficients[-c(2:25)]
 
 # find all possible combos
 stateIndex = c(0,2:6)
@@ -250,51 +251,65 @@ cases.df = data.frame(Base = rep(1, 1440),
 
 # loop over all possible coefficient combos
 covarianceValues = double(length=nrow(cases.df))
+coefficientEstimates = covarianceValues+fixed3$coefficients[1]
+
           for (i in 1:nrow(cases.df[,])){
           filteredVcov = vcovInteractions
-          if(cases.df$veryVulnerable[i]==0){
-                 filteredVcov = filteredVcov[-27,-27]}
-          # indexRed = vulnerableIndex[-cases.df$veryVulnerable[i]]
-          # if (length(indexRed)!=0) {
-          #   filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
-          # } else {
-          #   filteredVcov = filteredVcov[-vulnerableIndex[-1],-vulnerableIndex[-1]]
-          # }
-          # print(paste(i, sum(filteredVcov)))
           
-    
-      # for (i in 1:nrow(cases.df[1,])){
-      indexRed = monthIndex[-cases.df$Month[i]]
-      if (length(indexRed)!=0) {
-        filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+          if(cases.df$veryVulnerable[i]==0){
+                 filteredVcov = filteredVcov[-27,-27]}else{
+                   coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[27]
+                 }
+
+      indexRed = monthIndex[monthIndex!=cases.df$Month[i]]
+      if (cases.df$Month[i]!=0) {
+        filteredVcov = filteredVcov[-indexRed, -indexRed]
+        coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$Month[i]]
       } else {
         filteredVcov = filteredVcov[-monthIndex[-1],-monthIndex[-1]]
       }
-      # print(paste(i, sum(filteredVcov)))
-      
-    # for (i in 1:nrow(cases.df[1,])){
-    indexRed = educIndex[-cases.df$Schooling[i]]
-    if (length(indexRed)!=0) {
-      filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+
+    indexRed = educIndex[educIndex!=cases.df$Schooling[i]]
+    if (cases.df$Schooling[i]!=0) {
+      filteredVcov = filteredVcov[-indexRed, -indexRed]
+      coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$Schooling[i]]
     } else {
       filteredVcov = filteredVcov[-educIndex[-1],-educIndex[-1]]
     }
-    # print(paste(i, sum(filteredVcov)))
-    
-    # for (i in 1:nrow(cases.df[1,])){
-  indexRed = stateIndex[-cases.df$State[i]]
-  if (length(indexRed)!=0) {
-    filteredVcov = filteredVcov[-indexRed[-1], -indexRed[-1]]
+
+  indexRed = stateIndex[stateIndex!=cases.df$State[i]]
+  if (cases.df$State[i]!=0) {
+    filteredVcov = filteredVcov[-indexRed, -indexRed]
+    coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$State[i]]
   } else {
     filteredVcov = filteredVcov[-stateIndex[-1],-stateIndex[-1]]
   }
-  # print(paste(i, sum(filteredVcov)))
   covarianceValues[i]=sum(filteredVcov)
-  # print(i)
+  
+  
 }
 
 cases.df$covarianceValues = covarianceValues
 cases.df$se = sqrt(cases.df$covarianceValues)
-# convert variances into SEs
+cases.df$coef = coefficientEstimates
+cases.df = cases.df %>%
+  arrange(coef) %>%
+  mutate(case = 1:1440)
 ```
 
+```{r}
+hist(cases.df$coef)
+cases.df %>% filter(se<2) %>% 
+  ggplot(aes(y=case)) +
+  geom_line(aes(x=coef)) +
+  geom_errorbarh(aes(y=case, xmin=coef-1.96*se, xmax=coef+1.96*se), width=.02, alpha=.1) +
+  theme_minimal()
+
+
+cases.df %>% 
+  ggplot(aes(y=case)) +
+  geom_line(aes(x=coef)) +
+  geom_errorbarh(aes(y=case, xmin=coef-1.96*se, xmax=coef+1.96*se), width=.02, alpha=.1) +
+  theme_minimal()
+  
+```
