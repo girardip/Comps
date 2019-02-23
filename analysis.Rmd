@@ -314,7 +314,7 @@ plot_Final1 = cases.df %>%
   labs(x="Coefficient of inflation tax", 
        y="Cases") +
   theme_minimal()
-ggsave(plot_Final1, filename = "Plots/plotFinal.jpeg")
+ggsave(plot_Final1, filename = "Plots/plotFinal.jpeg", width = 6, height=6, units="in")
 
 cases.df %>% 
   ggplot(aes(y=case)) +
@@ -325,3 +325,11 @@ cases.df %>%
   
 ```
 use pvcovhc for shit!!!
+
+```{r}
+cases_final = cases.df %>%
+    mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+           Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                  ifelse(coef-1.96*se>0, "Positive", "None")))
+summary(as.factor(cases_final$Significantly))/sum(summary(as.factor(cases_final$Significantly)))
+```

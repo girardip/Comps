@@ -99,12 +99,13 @@ plot3=ggplot(cleanGrowthData, aes(x=Date, y=ChangeInGDP)) + geom_line() + theme_
 summary(lm(data=cleanGrowthData, ChangeInGDP ~ as.factor(Month))) # there seems to be some seasonality 
 summary(lm(data=inflation, Inflation ~ as.factor(Month))) # there seems to be some seasonality 
 
-plot4=ggplot(inflation, aes(x=Month, y=Inflation)) + 
-  geom_line(aes(col=as.factor(paste0(Year, Region)))) +
+plot4=ggplot(inflation %>% filter(Region!="Brasil") %>% select(Region, Month, Inflation, Year), aes(x=Month, y=Inflation)) + 
+  geom_line(aes(col=as.factor(Year)), alpha=1) +
   labs(title="Inflation Seasonality, colored by Region") +
   theme_minimal()+
-  theme(legend.position="none")
-plot4
+  theme(legend.position="none") + 
+  facet_wrap(~Region, nrow = 3)+ scale_color_brewer(palette="Set3")
+plot4 
 
 
 ```
@@ -118,7 +119,7 @@ data.table::fwrite(combined.df, "macrodata.csv")
 ```{r}
 ggsave("Plots/plot1_macro.jpeg", plot1, device = "jpeg", width = 6, height=6, units="in")
 ggsave("Plots/plot3_macro.jpeg", plot3, device = "jpeg", width = 6, height=6, units="in")
-ggsave("Plots/plot4_macro.jpeg", plot4, device = "jpeg", width = 6, height=6, units="in")
+ggsave("Plots/plot4_macro.jpeg", plot4, device = "jpeg", width = 5, height=7, units="in")
 ggsave("Plots/plot2_macro.jpeg", plot2, device = "jpeg", width = 6, height=6, units="in")
 
 grid1=grid.arrange(plot1,plot4)
