@@ -301,13 +301,15 @@ cases.df = cases.df %>%
 hist(cases.df$coef)
 plot_Final1 = cases.df %>%
   filter(se<2) %>%
-  mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No")) %>% 
+  mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+         Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                ifelse(coef-1.96*se>0, "Positive", "None"))) %>% 
   ggplot(aes(y=case)) +
   geom_line(aes(x=coef)) +
   geom_errorbarh(aes(y=case,
                      xmin=coef-1.96*se,
                      xmax=coef+1.96*se,
-                     col=veryVulnerable), alpha=.1) +
+                     col=Significantly), alpha=.2) +
   geom_vline(xintercept = 0, alpha=.5, linetype = "longdash") +
   labs(x="Coefficient of inflation tax", 
        y="Cases") +
