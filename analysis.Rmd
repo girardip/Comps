@@ -316,12 +316,21 @@ plot_Final1 = cases.df %>%
   theme_minimal()
 ggsave(plot_Final1, filename = "Plots/plotFinal.jpeg", width = 6, height=6, units="in")
 
-cases.df %>% 
+plot_Final2 = cases.df %>%
+  mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+         Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                ifelse(coef-1.96*se>0, "Positive", "None"))) %>% 
   ggplot(aes(y=case)) +
   geom_line(aes(x=coef)) +
-  geom_errorbarh(aes(y=case, xmin=coef-1.96*se, xmax=coef+1.96*se),
-                 alpha=.1) +
+  geom_errorbarh(aes(y=case,
+                     xmin=coef-1.96*se,
+                     xmax=coef+1.96*se,
+                     col=Significantly), alpha=.2) +
+  geom_vline(xintercept = 0, alpha=.5, linetype = "longdash") +
+  labs(x="Coefficient of inflation tax", 
+       y="Cases") +
   theme_minimal()
+ggsave(plot_Final2, filename = "Plots/plotFinal2.jpeg", width = 6, height=6, units="in")
   
 ```
 use pvcovhc for shit!!!
