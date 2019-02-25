@@ -17,7 +17,7 @@ fullPME = fullPME %>% mutate(Gender = as.factor(v203),
          -starts_with("vD"))
 fullPME$Schooling = as.factor(ifelse(is.na(fullPME$Schooling), "NoSchooling", fullPME$Schooling))
 levels(fullPME$Gender) = c("Male", "Female")
-levels(fullPME$Ethnicity) = c("White", "Black", "Yellow", "Mixed", "Native", "Ignored")
+levels(fullPME$Ethnicity) = c("Not Informed", "White", "Black", "Yellow", "Mixed", "Native", "Ignored")
 levels(fullPME$Literacy) = c("Deleted by surveyor", "Yes", "No")
 levels(fullPME$Schooling) = c("Primary", "HighSchool_1", "HighSchool_2",
                                   "MiddleSchool", "HighSchool_3", "College",
