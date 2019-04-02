@@ -152,7 +152,7 @@ ggplot(data=wagesPropr_numberObs,aes(x=n)) +
 ## Writing full dataset
 
 ```{r}
-fwrite(reducedPME, "complete.csv")
+fwrite(reducedPME, "complete2.csv")
 ```
 
 
