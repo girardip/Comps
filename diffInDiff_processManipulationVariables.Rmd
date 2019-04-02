@@ -1,0 +1,158 @@
+---
+title: "Manipulation of Variables"
+author: "Pedro Girardi"
+date: "December 11, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(data.table)
+library(lme4)
+```
+
+## Importing STATA Exported .csvs and selecting variables of interest
+
+```{r, eval=F}
+setwd("PME_stata/")#set directory to where the STATA csv files are
+listOfCsv = list.files()# get a list of all files
+
+# create data frame with one of the files (Selecting for the variables of interest)
+stataCsv = fread(file = listOfCsv[[1]]) %>% 
+  select(v035, v040, v050, v070, v075, v203, v234, v409, v4191, v208,
+         v301, v307, v234, idind) 
+
+# runs for loop that reads one file and appends rows of columns of interest to previous df
+for (fileCsv in listOfCsv[-1]){
+  currentFile = fread(file = fileCsv) %>% 
+    select(v035, v040, v050, v070, v075, v203, v234, v409, v4191, v208,
+          v301, v307, v234, idind) 
+  stataCsv = bind_rows(stataCsv, currentFile)
+}
+fwrite(stataCsv, "finalPME.csv")
+```
+
+```{r Reading Reduced PME file}
+reducedPME = fread("finalPME.csv") %>% 
+  mutate(v035 = as.factor(v035))
+```
+
+## Merging Dataset with Macro Data
+
+```{r}
+macro.df = fread("macrodata.csv") %>% 
+  mutate(Region = as.factor(Region))
+metropolitanVectorNames = list(26, 29, 31, 33, 35, 43)
+names(metropolitanVectorNames) = unique(macro.df$Region)[unique(macro.df$Region)!="Brasil"]
+levels(reducedPME$v035) = names(metropolitanVectorNames)
+reducedPME = left_join(reducedPME, macro.df, by=c("v035"="Region", "v070"="Month", "v075"="Year"))
+```
+
+## Flagging low income people
+
+```{r Flags low income people}
+reducedPME = reducedPME %>% 
+  filter(!is.na(v4191),
+         v4191!=999999999,
+         v4191!=0) %>%
+  mutate(realWage = v4191/PriceIndex) 
+
+# group by individual, create number of obs column and number of obs under povty line
+
+reducedPME = reducedPME %>%  
+  group_by(month_year = as.factor(paste0(as.character(v070),as.character(v075)))) %>% 
+  mutate(PoorThreshold = quantile(realWage, probs=.2), 
+         Poor = as.factor(ifelse(realWage<PoorThreshold, T, F)))
+
+reducedPME = reducedPME %>% 
+  group_by(idind) %>%
+  mutate(nObsInd = n(),
+         nObsPoor = sum(as.numeric(Poor)-1))
+```
+
+```{r Adding Lag wages and Removing Poor People and People without 8 obs}
+reducedPME = reducedPME %>% 
+  group_by(idind) %>%
+  arrange(timeDiscrete) %>% 
+  mutate(lagRealWage = lag(realWage)) %>% 
+  filter(timeDiscrete==(lag(timeDiscrete)+1)) %>% 
+  mutate(changeWages = (realWage-lagRealWage)/lagRealWage) #multiplicative change
+```
+
+```{r}
+# creating factor variable on "depth" of poverty
+summary(reducedPME$nObsPoor)
+reducedPME = reducedPME %>% 
+  mutate(veryVulnerable = ifelse(nObsPoor>4, T, F))
+```
+
+## Some people have different genders!!!! Probably an issue. Remove variables
+
+```{r}
+peopleDiffGenders = reducedPME %>%
+  group_by(idind) %>%
+  summarise(GenderObs = sum(v203)) %>% 
+  filter(!GenderObs%in%c(8,16)) %>% 
+  select(-GenderObs)
+peopleDiffGenders = peopleDiffGenders$idind
+
+# peopleDiffStates = reducedPME %>%
+#   group_by(idind) %>%
+#   summarise(RegionalObs = dim(table((v035)))) %>% 
+#   filter(RegionalObs!=1) %>% 
+#   select(-RegionalObs)
+# # ok no one in different states
+
+reducedPME = reducedPME %>% 
+  filter(!idind %in% peopleDiffGenders)
+```
+
+## Working with income variable
+
+```{r Creates Lagged Income and change in income, eval=F}
+reducedPME = reducedPME %>% 
+                group_by(idind) %>%
+                mutate(lagRealWage = lag(realWage),
+                       pctChangeWage = (realWage-lagRealWage)/(lagRealWage))
+# Check why most people have ~2.4 obs
+```
+
+## Checking issues with not enough observations
+
+```{r, eval=F}
+# WONT WORK BECAUSE I CHANGED THE WAY THE DATASET WORKS
+
+numberIdind = reducedPME %>% 
+  group_by(idind) %>% 
+  summarise(n = n())
+numberIdind %>% group_by(n) %>% summarise(n()/nrow(numberIdind))
+
+numberIdind_full = original_reducedPME %>% 
+  filter(!is.na(v4191)) %>% 
+  group_by(idind) %>% 
+  summarise(n = n(), maxWage = max(v4191, na.rm = T))
+wagesPropr_numberObs = numberIdind_full %>% group_by(n) %>% summarise(prop=n()/nrow(numberIdind_full),
+                                               meanMaxWage = mean(maxWage, na.rm = T))
+# check if mean income varies by different number of observations
+ggplot(data=wagesPropr_numberObs,aes(x=n)) + 
+  geom_col(aes(y=meanMaxWage)) +
+  theme_minimal()
+
+ggplot(data=wagesPropr_numberObs,aes(x=n)) + 
+  geom_col(aes(y=prop)) +
+  theme_minimal()
+```
+
+```
+
+## Writing full dataset
+
+```{r}
+fwrite(reducedPME, "complete.csv")
+```
+
+
