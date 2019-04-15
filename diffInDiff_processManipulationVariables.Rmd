@@ -92,7 +92,7 @@ reducedPME = reducedPME %>%
 
 ## Some people have different genders!!!! Probably an issue. Remove variables
 
-```{r}
+```{r,eval=F}
 peopleDiffGenders = reducedPME %>%
   group_by(idind) %>%
   summarise(GenderObs = sum(v203)) %>% 
@@ -147,12 +147,10 @@ ggplot(data=wagesPropr_numberObs,aes(x=n)) +
   theme_minimal()
 ```
 
-```
-
 ## Writing full dataset
 
 ```{r}
-fwrite(reducedPME, "complete.csv")
+fwrite(reducedPME, "complete_diffY.csv")
 ```
 
 

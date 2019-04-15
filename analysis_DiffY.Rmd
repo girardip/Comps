@@ -1,0 +1,331 @@
+---
+title: "Analysis"
+author: "Pedro Girardi"
+date: "January 27, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+library(tidyverse)
+library(data.table)
+library(lme4)
+library(plm)
+library(lmtest)
+library(sandwich)
+library(car)
+library(xtable)
+```
+
+## Importing df
+
+```{r}
+complete.df = fread("complete_diffY.csv")
+colnames(complete.df)[c(1,7,5,4)] = c("State", "Age", "Nominal Income","Month")
+complete.df$State = as.factor(complete.df$State)
+levels(complete.df$State)[5]="São Paulo"
+```
+
+## Recoding Variables
+
+Variables:
+
+v203: Gender (Male=1)
+v208: Ethnicity (White=1, Black=2, Yellow=3, Mixed=4, Native=5, Ignored=9)
+v4191: Income (999999999 = ignored)
+v301: Writes/reads? (Yes=1, No=2, 0="Deleted by the surveyer", NA=NA)
+v307: schooling (a mess...)/turn into factor
+v234: age
+
+ADD 409 (TYPE OF WORKER!!!!)
+
+```{r}
+complete.df = complete.df %>% mutate(Gender = as.factor(v203),
+                       Ethnicity = as.factor(v208),
+                       Literacy = as.factor(v301),
+                       Schooling = as.factor(v307),
+                       EmploymentType = as.factor(v409),
+                       idind = as.factor(idind)) %>% 
+                              select(-v040, -v050, -v203, -v208, -v301, -v307, -v409,
+                                     -starts_with("vD"))
+complete.df$Schooling = as.factor(ifelse(is.na(complete.df$Schooling), "NoSchooling", complete.df$Schooling))
+levels(complete.df$Gender) = c("Male", "Female")
+levels(complete.df$Ethnicity) = c("White", "Black", "Yellow", "Mixed", "Native", "Ignored")
+levels(complete.df$Literacy) = c("Yes", "No")
+levels(complete.df$Schooling) = c("Primary", "HighSchool_1", "HighSchool_2",
+                                  "MiddleSchool", "HighSchool_3", "College",
+                                  "AdultsSchool", "PreSchool", "Graduate",
+                                  "NoSchooling")
+levels(complete.df$EmploymentType) = c("Domestic", "Employee") #note that people who own their own business don't report income
+```
+
+```{r Removing Outliers and fixing veryVulnerable}
+complete.df = complete.df %>% 
+  filter(changeWages<1) #not more than doubling the wage
+
+# complete.df = complete.df %>% 
+#   group_by(idind) %>%  #ILL HAVE  TO FIX THIS IN THE ORIGINAL DF
+#   mutate(veryVulnerable = ifelse())
+```
+
+## Visually checking for mixed effects
+
+```{r, cache=T, eval=F}
+set.seed(2)
+ggplot(complete.df %>% filter(idind %in% sample(complete.df$idind, size = 25)),
+       aes(x=lagInflationTax, y=realWage)) +
+  geom_point(aes(col=idind)) +
+  geom_smooth(aes(col=idind), method = "lm", se = F) +
+  theme_minimal() +
+  theme(legend.position="none")
+```
+
+## Fitting LME model
+
+Worrying about LME not being the ideal. Needs to test with Hausman test.
+
+
+```{r}
+set.seed(1)
+sampleInd = sample(complete.df$idind, size = length(complete.df$idind)/100)
+sample_complete.df =  complete.df %>% filter(idind %in% sampleInd)
+```
+
+## be sure to test with hausman 
+
+* remove people w fewer than 3 
+
+* run hausmann test 
+
+Decided not to have random effects for inflation coefficient so to avoid issues with hausmann test (trade-off)
+
+Checked with Katie, sampling expert, on potential issues with subsetting and decided to subset (issue with power may exist, but mostly for very specific interactions)
+
+
+```{r Fitting fixef}
+fixed = lm(changeWages ~ lagInflationTax + ChangeInGDP * lagChangeInGDP + 
+                (State +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType +
+                   Age + I(Age^2) + as.factor(Month)+
+                   veryVulnerable)*lagInflationTax,
+            data = complete.df) 
+```
+
+```{r}
+summary(fixed)
+```
+
+## Variable Selection
+
+```{r}
+fixed_vcovHC1 = coeftest(fixed, vcov. = vcovHC)
+fixed_vcovHC1
+```
+
+```{r}
+coefs = names(coef(fixed))
+linearHypothesis(model = fixed, c(coefs[grep("Ethnicity", coefs)],coefs[grep("GDP", coefs)], "lagInflationTax:Age", "lagInflationTax:I(Age^2)"), white.adust=T)
+```
+
+```{r}
+fixed2 = update(fixed, . ~ . -Ethnicity -ChangeInGDP -ChangeInGDP:lagInflationTax -ChangeInGDP:lagChangeInGDP 
+                -lagChangeInGDP -lagChangeInGDP:lagInflationTax -Ethnicity:lagInflationTax 
+                -lagInflationTax:Age -lagInflationTax:I(Age^2))
+summary(fixed2)
+fixed_vcovHC2 = coeftest(fixed2, vcov. = vcovHC)
+fixed_vcovHC2
+```
+
+```{r}
+coefs = names(coef(fixed2))
+linearHypothesis(model = fixed2, c(coefs[grep("lagInflationTax:Gen", coefs)],coefs[grep("lagInflationTax:Lit", coefs)],coefs[grep("lagInflationTax:Emp", coefs)]), white.adust=T)
+# maybe recode factors to have mid year vs rest?
+```
+
+```{r}
+fixed3 = update(fixed2, . ~ . -lagInflationTax:Gender -lagInflationTax:Literacy -lagInflationTax:EmploymentType)
+summary(fixed3)
+fixed_vcovHC3 = coeftest(fixed3, vcov. = vcovHC)
+fixed_vcovHC3
+```
+
+```{r}
+coefs = names(coef(fixed2))
+linearHypothesis(model = fixed3, c(coefs[grep("Tax:Sch", coefs)]), white.adust=T)
+# maybe recode factors to have mid year vs rest?
+# save.image("~/Comps/finalModels.RData")
+```
+
+
+```{r}
+stargazer(fixed_vcovHC3, 
+          type = "latex", single.row = T, 
+          dep.var.caption = "change in Wages (%)", 
+          title = "Final Regression Model", font.size = "small")
+```
+
+```{r}
+# CIs for 1% month inflation tax?
+
+coefs.fixed3 = data.frame(sumCoefs = c(sum(fixed3$coefficients[c(1)]), #base
+sum(fixed3$coefficients[c(1,39)]), #base no shooling
+sum(fixed3$coefficients[c(1,39,51)]), #base no shooling, vulnerable
+sum(fixed3$coefficients[c(1,28)]), #base, RJ
+sum(fixed3$coefficients[c(1,39,28)]), #base no shooling, RJ
+sum(fixed3$coefficients[c(1,39,51,28)]) #base no shooling, vulnerable, RJ
+))
+
+coefs.fixed3 = coefs.fixed3 %>% 
+  mutate(change_01pct = round((exp(sumCoefs/1000)-1)*100, 2),
+         change_1pct = round((exp(sumCoefs/100)-1)*100, 2),
+         change_3pct = round((exp(sumCoefs/100*3)-1)*100, 2),
+         DemographicGroup = c("Base",
+                              "Base with no schooling",
+                              "Base no schooling, very vulnerable",
+                              "Base, RJ",
+                              "Base, RJ, no schooling",
+                              "Base, RJ, no schooling, vulnerable"))
+coefs.fixed3 = coefs.fixed3[,c(5,2,3,4)]
+print.xtable(xtable(coefs.fixed3, caption = c("Changes in Income for Demographic Groups")),
+             include.rownames=F)
+
+# a = pvcovHC(fixed3, method = "white2", type="HC1", "group")
+```
+
+```{r, eval = F}
+# creates vcov narrow table
+fixed3_interactionCoefs = names(fixed3$coefficients[-c(2:25)])
+reduced_vcov3 = vcov_fixed3[fixed3_interactionCoefs,fixed3_interactionCoefs]
+reduced_vcov3 = data.frame(row.names = rownames(reduced_vcov3),
+                              typeFactor = c("Base", rep("State",5), rep("Schooling", 9), rep("Month", 11), "veryVulnerable"),
+                              numberFactor = as.integer(c(1, 1:5, 1:9, 1:11, 1)),
+                              reduced_vcov3) %>%
+  rownames_to_column() %>%
+  tidyr::gather(key = "key", value="value", -c(1,2,3))
+
+# creates data frame with all 1440 cases
+cases.df = data.frame(Base = rep(1, 1440),
+           State = rep(0:5, 1440/6),
+           Schooling = rep(rep(0:9, each=6),1440/(6*10)),
+           Month = rep(rep(rep(0:11, each=10), each=6), 1440/(6*10*12)),
+           veryVulnerable = rep(0:1, each=720))
+
+coefSE = 
+
+```
+
+```{r}
+# create matrix with all interaction terms
+vcovInteractions = vcov_fixed3[-c(2:25), -c(2:25)]
+infCoefs = fixed3$coefficients[-c(2:25)]
+
+# find all possible combos
+stateIndex = c(0,2:6)
+educIndex = c(0,7:15)
+monthIndex = c(0,16:26)
+vulnerableIndex = c(0,27)
+
+# length(stateIndex)*length(educIndex)*length(monthIndex)*length(vulnerableIndex) # length checks ok 1440
+# create DF with all possible combos
+cases.df = data.frame(Base = rep(1, 1440),
+           State = rep(stateIndex, 1440/6),
+           Schooling = rep(rep(educIndex, each=6),1440/(6*10)),
+           Month = rep(rep(rep(monthIndex, each=10), each=6), 1440/(6*10*12)),
+           veryVulnerable = rep(0:1, each=720))
+
+# loop over all possible coefficient combos
+covarianceValues = double(length=nrow(cases.df))
+coefficientEstimates = covarianceValues+fixed3$coefficients[1]
+
+          for (i in 1:nrow(cases.df[,])){
+          filteredVcov = vcovInteractions
+          
+          if(cases.df$veryVulnerable[i]==0){
+                 filteredVcov = filteredVcov[-27,-27]}else{
+                   coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[27]
+                 }
+
+      indexRed = monthIndex[monthIndex!=cases.df$Month[i]]
+      if (cases.df$Month[i]!=0) {
+        filteredVcov = filteredVcov[-indexRed, -indexRed]
+        coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$Month[i]]
+      } else {
+        filteredVcov = filteredVcov[-monthIndex[-1],-monthIndex[-1]]
+      }
+
+    indexRed = educIndex[educIndex!=cases.df$Schooling[i]]
+    if (cases.df$Schooling[i]!=0) {
+      filteredVcov = filteredVcov[-indexRed, -indexRed]
+      coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$Schooling[i]]
+    } else {
+      filteredVcov = filteredVcov[-educIndex[-1],-educIndex[-1]]
+    }
+
+  indexRed = stateIndex[stateIndex!=cases.df$State[i]]
+  if (cases.df$State[i]!=0) {
+    filteredVcov = filteredVcov[-indexRed, -indexRed]
+    coefficientEstimates[i]=coefficientEstimates[i]+infCoefs[cases.df$State[i]]
+  } else {
+    filteredVcov = filteredVcov[-stateIndex[-1],-stateIndex[-1]]
+  }
+  covarianceValues[i]=sum(filteredVcov)
+  
+  
+}
+
+cases.df$covarianceValues = covarianceValues
+cases.df$se = sqrt(cases.df$covarianceValues)
+cases.df$coef = coefficientEstimates
+cases.df = cases.df %>%
+  arrange(coef) %>%
+  mutate(case = 1:1440)
+```
+
+```{r}
+hist(cases.df$coef)
+plot_Final1 = cases.df %>%
+  filter(se<2) %>%
+  mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+         Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                ifelse(coef-1.96*se>0, "Positive", "None"))) %>% 
+  ggplot(aes(y=case)) +
+  geom_line(aes(x=coef)) +
+  geom_errorbarh(aes(y=case,
+                     xmin=coef-1.96*se,
+                     xmax=coef+1.96*se,
+                     col=Significantly), alpha=.2) +
+  geom_vline(xintercept = 0, alpha=.5, linetype = "longdash") +
+  labs(x="Coefficient of inflation tax", 
+       y="Cases") +
+  theme_minimal()
+ggsave(plot_Final1, filename = "Plots/plotFinal.jpeg", width = 6, height=6, units="in")
+
+plot_Final2 = cases.df %>%
+  mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+         Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                ifelse(coef-1.96*se>0, "Positive", "None"))) %>% 
+  ggplot(aes(y=case)) +
+  geom_line(aes(x=coef)) +
+  geom_errorbarh(aes(y=case,
+                     xmin=coef-1.96*se,
+                     xmax=coef+1.96*se,
+                     col=Significantly), alpha=.2) +
+  geom_vline(xintercept = 0, alpha=.5, linetype = "longdash") +
+  labs(x="Coefficient of inflation tax", 
+       y="Cases") +
+  theme_minimal()
+ggsave(plot_Final2, filename = "Plots/plotFinal2.jpeg", width = 6, height=6, units="in")
+  
+```
+use pvcovhc for shit!!!
+
+```{r}
+cases_final = cases.df %>%
+    mutate(veryVulnerable = ifelse(veryVulnerable==1,"Yes","No"),
+           Significantly = ifelse(coef+1.96*se<0,"Negative", 
+                                  ifelse(coef-1.96*se>0, "Positive", "None")))
+summary(as.factor(cases_final$Significantly))/sum(summary(as.factor(cases_final$Significantly)))
+```
