@@ -62,6 +62,12 @@ levels(complete.df$Schooling) = c("Primary", "HighSchool_1", "HighSchool_2",
 levels(complete.df$EmploymentType) = c("Domestic", "Employee") #note that people who own their own business don't report income
 ```
 
+```{r Removing Individuals with Too High Wages}
+nrow(complete.df)
+complete.df = complete.df %>% filter(realWage < 1e3)
+nrow(complete.df)
+```
+
 ## Visually checking for mixed effects
 
 ```{r, cache=T, eval=F}
@@ -81,38 +87,50 @@ Worrying about LME not being the ideal. Needs to test with Hausman test.
 
 ```{r}
 set.seed(1)
-sampleInd = sample(complete.df$idind, size = length(complete.df$idind)/100)
+sampleInd = sample(complete.df$idind, size = length(complete.df$idind)/400)
 sample_complete.df =  complete.df %>% filter(idind %in% sampleInd)
 ```
 
-## be sure to test with hausman 
-
-* remove people w fewer than 3 
-
-* run hausmann test 
-
-Decided not to have random effects for inflation coefficient so to avoid issues with hausmann test (trade-off)
-
-Checked with Katie, sampling expert, on potential issues with subsetting and decided to subset (issue with power may exist, but mostly for very specific interactions)
-
 
 ```{r Fitting fixef}
-fixed = plm(realWage ~ PriceIndex + RealGDP + 
+fixed = plm(realWage ~ log(PriceIndex) + RealGDP + 
                 (State +Gender + Ethnicity + Literacy +
                    Schooling + EmploymentType +
                    Age + I(Age^2) + as.factor(Month)+
-                   veryVulnerable)*lagInflationTax -State -Gender -Ethnicity -veryVulnerable,
-            data = sample_complete.df, index = c("idind", "timeDiscrete"), model = "fd") 
+                   veryVulnerable)*log(PriceIndex) -State -Gender -Ethnicity -veryVulnerable -1 + timeDiscrete2,
+            data = complete.df %>% mutate(timeDiscrete2=as.integer(timeDiscrete)), index = c("idind", "timeDiscrete"), model = "fd") 
+# running with reduced sample
+fixed2 = plm(log(realWage) ~ log(PriceIndex) + RealGDP + 
+                (State +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType +
+                   Age + I(Age^2) + as.factor(Month)+
+                   veryVulnerable)*log(PriceIndex) -State -Gender -Ethnicity -veryVulnerable -1 +
+               timeDiscrete2 + as.factor(Month)*State,
+            data = complete.df %>% mutate(timeDiscrete2=as.integer(timeDiscrete)), index = c("idind", "timeDiscrete"), model = "fd") 
+# running with reduced sample
+fixed2_MonthsReduced = plm(log(realWage) ~ log(PriceIndex) + RealGDP + 
+                (State +Gender + Ethnicity + Literacy +
+                   Schooling + EmploymentType +
+                   Age + I(Age^2) + MonthJan+
+                   veryVulnerable)*log(PriceIndex) -State -Gender -Ethnicity -veryVulnerable -1 +
+               timeDiscrete2 + MonthJan*State,
+            data = sample_complete.df %>% mutate(timeDiscrete2=as.integer(timeDiscrete),
+                                                 MonthJan=as.factor(ifelse(Month==1,T,F))), index = c("idind", "timeDiscrete"), model = "fd") 
+# running with reduced sample
 ```
+
+maybe useful? https://cran.r-project.org/web/packages/wfe/wfe.pdf
 
 ```{r}
 summary(fixed)
+summary(fixed2)
+summary(fixed2_MonthsReduced)
 ```
 
 ## Variable Selection
 
 ```{r}
-fixed_vcovHC1 = coeftest(fixed, vcov. = vcovHC)
+fixed_vcovHC1 = coeftest(fixed2, vcov. = vcovHC)
 fixed_vcovHC1
 ```
 
